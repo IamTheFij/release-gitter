@@ -21,6 +21,7 @@ import requests
 
 # Extract metadata from repo
 
+
 class InvalidRemoteError(ValueError):
     pass
 
@@ -36,7 +37,9 @@ class GitRemoteInfo:
 
         Currently only supporting Github and Gitea APIs"""
         if self.hostname == "github.com":
-            return f"https://api.{self.hostname}/repos/{self.owner}/{self.repo}/releases"
+            return (
+                f"https://api.{self.hostname}/repos/{self.owner}/{self.repo}/releases"
+            )
 
         # Try to detect an api
         swagger_uri = f"https://{self.hostname}/swagger.v1.json"
@@ -73,7 +76,9 @@ def get_git_remote(git_url: Optional[str] = None) -> GitRemoteInfo:
     if git_url.startswith("git@github.com:"):
         git_ssh_parts = git_url.partition(":")
         if not all(git_ssh_parts):
-            raise InvalidRemoteError(f"Could not parse URL {git_url}. Is this an ssh url?")
+            raise InvalidRemoteError(
+                f"Could not parse URL {git_url}. Is this an ssh url?"
+            )
         git_url = f"ssh://{git_ssh_parts[0]}/{git_ssh_parts[2]}"
 
     u = urlparse(git_url)
@@ -82,7 +87,9 @@ def get_git_remote(git_url: Optional[str] = None) -> GitRemoteInfo:
 
     path = u.path.split("/")
     if len(path) < 3 or not all(path[1:3]):
-        raise InvalidRemoteError(f"{path[1:3]} Could not parse owner and repo from URL {git_url}")
+        raise InvalidRemoteError(
+            f"{path[1:3]} Could not parse owner and repo from URL {git_url}"
+        )
 
     return GitRemoteInfo(u.hostname, path[1], path[2].removesuffix(".git"))
 

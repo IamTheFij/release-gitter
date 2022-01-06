@@ -17,7 +17,9 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://git.iamthefij.com/iamthefij/release-gitter.git",
-    download_url=("https://git.iamthefij.com/iamthefij/release-gitter.git/archive/master.tar.gz"),
+    download_url=(
+        "https://git.iamthefij.com/iamthefij/release-gitter.git/archive/master.tar.gz"
+    ),
     author="iamthefij",
     author_email="",
     classifiers=[

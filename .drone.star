@@ -8,10 +8,6 @@ PYTHON_VERSIONS = [
     "latest",
 ]
 
-PYPY3_VERSIONS = [
-    "3",
-]
-
 
 def main(ctx):
     pipelines = []
@@ -48,9 +44,6 @@ def tests():
         "steps": [
             tox_step("python:"+version)
             for version in PYTHON_VERSIONS
-        ] + [
-            tox_step("pypy:"+version, "pypy3", "pypy3")
-            for version in PYPY3_VERSIONS
         ],
     }]
 
@@ -121,7 +114,7 @@ def push_to_pypi():
         "trigger": {
             "event": ["tag"],
             "ref": [
-                "refs/heads/master",
+                "refs/heads/main",
                 "refs/tags/v*",
             ],
         },

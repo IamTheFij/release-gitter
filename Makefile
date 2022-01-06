@@ -1,6 +1,6 @@
 OPEN_CMD := $(shell type xdg-open &> /dev/null && echo 'xdg-open' || echo 'open')
 NAME := release-gitter
-ENV := env
+ENV := venv
 
 .PHONY: default
 default: test
