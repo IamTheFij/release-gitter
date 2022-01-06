@@ -6,6 +6,12 @@ Easily download releases from sites like Github and Gitea
 
 Originally hosted at https://git.iamthefij.com/iamthefij/release-gitter.git
 
+## Installation
+
+From pypi `pip install release-gitter`
+
+Alternatively, you can download `release_gitter.py` and run that file as long as you have `requests` installed.
+
 ## Usage
 
 At minimum, release-gitter can be used to download the latest release file for a given repo using something like the following:
