@@ -25,6 +25,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.9",
     ],
     keywords="",
     packages=find_packages(
@@ -36,7 +37,7 @@ setup(
             "tests",
         ]
     ),
-    install_requires=[],
+    install_requires=["requests"],
     entry_points={
         "console_scripts": [
             "release-gitter=release_gitter:main",
