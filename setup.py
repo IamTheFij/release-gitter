@@ -39,9 +39,7 @@ setup(
         ]
     ),
     install_requires=["requests"],
-    extras_require={
-        "builder": ["toml", "wheel"]
-    },
+    extras_require={"builder": ["toml", "wheel"]},
     entry_points={
         "console_scripts": [
             "release-gitter=release_gitter:main",

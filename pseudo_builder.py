@@ -5,8 +5,8 @@ release-gitter based on a pyproject.toml file
 from pathlib import Path
 from shutil import copytree
 
-from wheel.wheelfile import WheelFile
 import toml
+from wheel.wheelfile import WheelFile
 
 import release_gitter as rg
 
@@ -61,12 +61,14 @@ class _PseudoBuildBackend:
     # Should allow passing args as `--build-option`
     _gitter_args = None
 
-    def prepare_metadata_for_build_wheel(self, metadata_directory, config_settings=None):
+    def prepare_metadata_for_build_wheel(
+        self, metadata_directory, config_settings=None
+    ):
         # Createa  .dist-info directory containing wheel metadata inside metadata_directory. Eg {metadata_directory}/{package}-{version}.dist-info/
         print("Prepare meta", metadata_directory, config_settings)
 
         metadata = read_metadata()
-        version = metadata.version.removeprefix('v')
+        version = metadata.version.removeprefix("v")
 
         # Returns distinfo dir?
         dist_info = Path(metadata_directory) / f"{PACKAGE_NAME}-{version}.dist-info"
@@ -74,20 +76,28 @@ class _PseudoBuildBackend:
 
         # Write metadata
         pkg_info = dist_info / "METADATA"
-        pkg_info.write_text("\n".join([
-            "Metadata-Version: 2.1",
-            f"Name: {PACKAGE_NAME}",
-            f"Version: {version}",
-        ]))
+        pkg_info.write_text(
+            "\n".join(
+                [
+                    "Metadata-Version: 2.1",
+                    f"Name: {PACKAGE_NAME}",
+                    f"Version: {version}",
+                ]
+            )
+        )
 
         # Write wheel info
         wheel_info = dist_info / "WHEEL"
-        wheel_info.write_text("\n".join([
-            "Wheel-Version: 1.0",
-            "Root-Is-Purelib: true",
-            "Tag: py2-none-any",
-            "Tag: py3-none-any",
-        ]))
+        wheel_info.write_text(
+            "\n".join(
+                [
+                    "Wheel-Version: 1.0",
+                    "Root-Is-Purelib: true",
+                    "Tag: py2-none-any",
+                    "Tag: py3-none-any",
+                ]
+            )
+        )
 
         return str(dist_info)
 
@@ -96,14 +106,16 @@ class _PseudoBuildBackend:
         # That should contain a toplevel drectory of `name-version` containing source files and the pyproject.toml
 
         # HACK: This isn't needed or used
-        p = Path(sdist_directory+".dist-info")
+        p = Path(sdist_directory + ".dist-info")
         return p
 
-    def build_wheel(self, wheel_directory, config_settings=None, metadata_directory=None):
+    def build_wheel(
+        self, wheel_directory, config_settings=None, metadata_directory=None
+    ):
         metadata_directory = Path(metadata_directory)
 
         metadata = read_metadata()
-        version = metadata.version.removeprefix('v')
+        version = metadata.version.removeprefix("v")
 
         wheel_directory = Path(wheel_directory)
         wheel_directory.mkdir(exist_ok=True)
@@ -122,8 +134,8 @@ class _PseudoBuildBackend:
         print(f"ls {wheel_directory}: {list(wheel_directory.glob('*'))}")
 
         wheel_filename = f"{PACKAGE_NAME}-{version}-py2.py3-none-any.whl"
-        with WheelFile(wheel_directory / wheel_filename, 'w') as wf:
-            print("Repacking wheel as {}...".format(wheel_filename), end='')
+        with WheelFile(wheel_directory / wheel_filename, "w") as wf:
+            print("Repacking wheel as {}...".format(wheel_filename), end="")
             # sys.stdout.flush()
             wf.write_files(wheel_directory)
 

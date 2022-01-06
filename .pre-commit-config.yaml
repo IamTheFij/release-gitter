@@ -23,4 +23,6 @@ repos:
     hooks:
       - id: mypy
         exclude: docs/
-        additional_dependencies: [ "types-requests" ]
+        additional_dependencies:
+          - "types-requests"
+          - "types-toml"
