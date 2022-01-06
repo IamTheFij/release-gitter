@@ -2,7 +2,7 @@
 
 PYTHON_VERSIONS = [
     # "3.7", doesnt support subscripted types, eg list[str]
-    "3.8",
+    # "3.8",
     "3.9",
     "latest",
 ]
