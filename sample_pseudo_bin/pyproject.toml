@@ -1,0 +1,17 @@
+[build-system]
+requires = ["release-gitter[builder]"]
+build-backend = "pseudo_builder"
+
+[tool.release-gitter]
+# git-url is not needed if you're in the actual source repo
+git-url = "https://github.com/JohnnyMorganz/StyLua"
+# version is not needed if you have a Cargo.toml in the current directory
+version = "0.11.3"
+
+extract-files = [ "stylua" ]
+format = "stylua-{version}-{system}.zip"
+exec = "chmod +x stylua"
+[tool.release-gitter.map-system]
+    Darwin = "macos"
+    Windows = "win64"
+    Linux = "linux"

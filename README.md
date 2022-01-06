@@ -68,3 +68,9 @@ Full usage is as follows:
                             A list of file name to extract from downloaded archive
       --extract-all, -x     Shell commands to execute after download or extraction
       --url-only            Only print the URL and do not download
+
+### Pre-Commit usage
+
+This can be used a way to wrap a binary release from a Github or Gitea by adding a `pyproject.toml` file to your current project directory and adding a `.pre-commit-hooks.yaml` file.
+
+Take a look at the `./sample_pseudo_bin` directory to see an example.
