@@ -12,7 +12,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="release-gitter",
-    version="0.2.0",
+    version="0.2.1",
     description="Easily download releases from sites like Github and Gitea",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -29,15 +29,7 @@ setup(
         "Programming Language :: Python :: 3.9",
     ],
     keywords="",
-    packages=find_packages(
-        exclude=[
-            "contrib",
-            "docs",
-            "examples",
-            "scripts",
-            "tests",
-        ]
-    ),
+    py_modules=["release_gitter", "pseudo_builder"],
     install_requires=["requests"],
     extras_require={"builder": ["toml", "wheel"]},
     entry_points={
