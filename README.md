@@ -28,7 +28,7 @@ In practice, it means that for a project like [StyLua](https://github.com/Johnny
         --map-system Windows=win64 --map-system Darwin=macos --map-system=linux=Linux \
         "stylua-{version}-{system}.zip"
 
-And `release-gitter` will get the release version from the `Cargo.toml`, get the URL from the `git remote`, call the Github API and look for a release matching the templated file name, extract the `stylua` file from the archive, and then make it executable.
+And `release-gitter` will get the release version from the `Cargo.toml`, get the URL from the `git remote`, call the Github API and look for a release matching the templated file name, extract the `stylua` file from the archive, and then make it executable. Alternatively, if you're project `--version-git-tag` can be used to pull the version from the latest tag. This will automatically do a shallow fetch (depth = 1), but this can be supressed with `--version-git-no-fetch`.
 
 This allows a single command to be run from a checked out repo from pre-commit on any system to fetch the appropriate binary.
 
@@ -38,6 +38,7 @@ Full usage is as follows:
 
     usage: release-gitter [-h] [--hostname HOSTNAME] [--owner OWNER] [--repo REPO]
                           [--git-url GIT_URL] [--version VERSION]
+                          [--version-git-tag] [--version-git-no-fetch]
                           [--map-system MAP_SYSTEM] [--map-arch MAP_ARCH]
                           [--exec EXEC] [--extract-files EXTRACT_FILES]
                           [--extract-all] [--url-only]
@@ -59,6 +60,10 @@ Full usage is as follows:
                             repo
       --version VERSION     Release version to download. If not provied, it will
                             look for project metadata
+      --version-git-tag, -t
+                            Get the release version from a git tag
+      --version-git-no-fetch
+                            Shallow fetch tags prior to checking versions
       --map-system MAP_SYSTEM, -s MAP_SYSTEM
                             Map a platform.system() value to a custom value
       --map-arch MAP_ARCH, -a MAP_ARCH

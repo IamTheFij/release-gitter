@@ -104,7 +104,18 @@ def get_cargo_version(p: Path) -> str:
     raise ValueError(f"No version found in {p}")
 
 
-def read_version() -> Optional[str]:
+def get_git_tag(fetch: bool = True) -> Optional[str]:
+    if fetch:
+        check_call(["git", "fetch", "--tags", "--depth", "1"])
+
+    git_tag = check_output(["git", "describe", "--tags"]).decode("UTF-8").strip()
+    return git_tag or None
+
+
+def read_version(from_tags: bool = False, fetch: bool = False) -> Optional[str]:
+    if from_tags:
+        return get_git_tag(fetch)
+
     matchers = {
         "Cargo.toml": get_cargo_version,
     }
@@ -362,6 +373,17 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
         help="Release version to download. If not provied, it will look for project metadata",
     )
     parser.add_argument(
+        "--version-git-tag",
+        "-t",
+        action="store_true",
+        help="Get the release version from a git tag",
+    )
+    parser.add_argument(
+        "--version-git-no-fetch",
+        action="store_true",
+        help="Shallow fetch tags prior to checking versions",
+    )
+    parser.add_argument(
         "--map-system",
         "-s",
         action=MapAddAction,
@@ -409,7 +431,10 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
             merge_field(parsed_args, remote_info, field)
 
     if parsed_args.version is None:
-        parsed_args.version = read_version()
+        parsed_args.version = read_version(
+            parsed_args.version_git_tag,
+            not parsed_args.version_git_no_fetch,
+        )
 
     if parsed_args.extract_all:
         parsed_args.extract_files = []
