@@ -285,7 +285,11 @@ class PackageAdapter:
 def download_asset(
     asset: dict[Any, Any],
     extract_files: Optional[list[str]] = None,
+    destination: Optional[Path] = None,
 ) -> list[Path]:
+    if destination is None:
+        destination = Path.cwd()
+
     result = requests.get(asset["browser_download_url"])
 
     content_type = asset.get(
@@ -350,7 +354,15 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "format",
-        help="Format template to match assets. Eg `foo-{version}-{system}-{arch}.zip`",
+        help="Format template to match assets. Eg. `foo-{version}-{system}-{arch}.zip`",
+    )
+    parser.add_argument(
+        "destination",
+        metavar="DEST",
+        nargs="?",
+        type=Path,
+        default=Path.cwd(),
+        help="Destination directory. Defaults to current directory",
     )
     parser.add_argument(
         "--hostname",
@@ -460,7 +472,11 @@ def main():
         print(asset["browser_download_url"])
         return
 
-    files = download_asset(asset, extract_files=args.extract_files)
+    files = download_asset(
+        asset,
+        extract_files=args.extract_files,
+        destination=args.destination,
+    )
 
     print(f"Downloaded {', '.join(str(f) for f in files)}")
 
