@@ -266,26 +266,38 @@ class PackageAdapter:
             f"Unknown package type, cannot extract from {type(self._package)}"
         )
 
-    def extractall(self, file_names: list[str]) -> list[str]:
+    def extractall(
+        self,
+        path: Optional[Path],
+        members: Optional[list[str]],
+    ) -> list[str]:
         """Extract all or a subset of files from the package
 
         If the `file_names` list is empty, all files will be extracted"""
-        if not file_names:
-            self._package.extractall()
+        if path is None:
+            path = Path.cwd()
+        if not members:
+            self._package.extractall(path=path)
             return self.get_names()
 
         if isinstance(self._package, ZipFile):
-            self._package.extractall(members=file_names)
+            self._package.extractall(path=path, members=members)
         if isinstance(self._package, TarFile):
-            self._package.extractall(members=(TarInfo(name) for name in file_names))
+            self._package.extractall(
+                path=path, members=(TarInfo(name) for name in members)
+            )
 
-        return file_names
+        return members
 
 
 def download_asset(
     asset: dict[Any, Any],
     extract_files: Optional[list[str]] = None,
+    destination: Optional[Path] = None,
 ) -> list[Path]:
+    if destination is None:
+        destination = Path.cwd()
+
     result = requests.get(asset["browser_download_url"])
 
     content_type = asset.get(
@@ -300,10 +312,10 @@ def download_asset(
                 "Cannot extract files from archive because we don't recognize the content type"
             )
         package = PackageAdapter(content_type, result)
-        extract_files = package.extractall(extract_files)
-        return [Path.cwd() / name for name in extract_files]
+        extract_files = package.extractall(path=destination, members=extract_files)
+        return [destination / name for name in extract_files]
 
-    file_name = Path.cwd() / asset["name"]
+    file_name = destination / asset["name"]
     with open(file_name, "wb") as f:
         f.write(result.content)
 
@@ -350,7 +362,15 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "format",
-        help="Format template to match assets. Eg `foo-{version}-{system}-{arch}.zip`",
+        help="Format template to match assets. Eg. `foo-{version}-{system}-{arch}.zip`",
+    )
+    parser.add_argument(
+        "destination",
+        metavar="DEST",
+        nargs="?",
+        type=Path,
+        default=Path.cwd(),
+        help="Destination directory. Defaults to current directory",
     )
     parser.add_argument(
         "--hostname",
@@ -460,7 +480,11 @@ def main():
         print(asset["browser_download_url"])
         return
 
-    files = download_asset(asset, extract_files=args.extract_files)
+    files = download_asset(
+        asset,
+        extract_files=args.extract_files,
+        destination=args.destination,
+    )
 
     print(f"Downloaded {', '.join(str(f) for f in files)}")
 
