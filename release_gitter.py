@@ -250,7 +250,7 @@ class PackageAdapter:
             self._package = ZipFile(BytesIO(response.content))
         elif content_type == "application/x-tar":
             self._package = TarFile(fileobj=response.raw)
-        elif content_type == "application/x-tar+gzip":
+        elif content_type in ("application/gzip", "application/x-tar+gzip"):
             self._package = TarFile.open(fileobj=BytesIO(response.content), mode="r:*")
         else:
             raise ValueError(f"Unknown or unsupported content type {content_type}")
