@@ -1,9 +1,11 @@
 import unittest
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import NamedTuple
 from typing import Optional
 from unittest.mock import MagicMock
+from unittest.mock import mock_open
 from unittest.mock import patch
 
 import requests
@@ -101,6 +103,35 @@ class TestRemoteInfo(unittest.TestCase):
                 }
             with patch("requests.get", return_value=mock_response):
                 subtest.run(release_gitter.GitRemoteInfo.get_releases_url)
+
+
+class TestVersionInfo(unittest.TestCase):
+    def test_no_cargo_file(self):
+        with patch("pathlib.Path.exists", return_value=False):
+            version = release_gitter.read_version()
+            self.assertIsNone(version)
+
+    def test_cargo_file_has_version(self):
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch(
+                "pathlib.Path.open",
+                mock_open(read_data="\n".join(["[package]", 'version = "1.0.0"'])),
+            ),
+        ):
+            version = release_gitter.read_version()
+            self.assertEqual(version, "1.0.0")
+
+    def test_cargo_file_missing_version(self):
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch(
+                "pathlib.Path.open",
+                mock_open(read_data="\n".join(["[package]"])),
+            ),
+        ):
+            with self.assertRaises(ValueError):
+                release_gitter.read_version()
 
 
 if __name__ == "__main__":
