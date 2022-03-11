@@ -65,8 +65,8 @@ class GitRemoteInfo:
         )
 
 
-def get_git_remote(git_url: Optional[str] = None) -> GitRemoteInfo:
-    """Extract Github repo info from git remote url"""
+def parse_git_remote(git_url: Optional[str] = None) -> GitRemoteInfo:
+    """Extract Github repo info from a git remote url"""
     if not git_url:
         git_url = (
             check_output(["git", "remote", "get-url", "origin"]).decode("UTF-8").strip()
@@ -94,7 +94,7 @@ def get_git_remote(git_url: Optional[str] = None) -> GitRemoteInfo:
     return GitRemoteInfo(u.hostname, path[1], path[2].removesuffix(".git"))
 
 
-def get_cargo_version(p: Path) -> str:
+def parse_cargo_version(p: Path) -> str:
     """Extracts cargo version from a Cargo.toml file"""
     with p.open() as f:
         for line in f:
@@ -104,7 +104,10 @@ def get_cargo_version(p: Path) -> str:
     raise ValueError(f"No version found in {p}")
 
 
-def get_git_tag(fetch: bool = True) -> Optional[str]:
+def read_git_tag(fetch: bool = True) -> Optional[str]:
+    """Get local git tag for current repo
+
+    fetch: optionally fetch tags with depth of 1 from remote"""
     if fetch:
         check_call(["git", "fetch", "--tags", "--depth", "1"])
 
@@ -113,11 +116,12 @@ def get_git_tag(fetch: bool = True) -> Optional[str]:
 
 
 def read_version(from_tags: bool = False, fetch: bool = False) -> Optional[str]:
+    """Read version information from file or from git"""
     if from_tags:
-        return get_git_tag(fetch)
+        return read_git_tag(fetch)
 
     matchers = {
-        "Cargo.toml": get_cargo_version,
+        "Cargo.toml": parse_cargo_version,
     }
 
     for name, extractor in matchers.items():
@@ -133,7 +137,7 @@ def read_version(from_tags: bool = False, fetch: bool = False) -> Optional[str]:
 # Fetch release and assets from Github
 
 
-def get_release(
+def fetch_release(
     remote: GitRemoteInfo,
     version: Optional[str] = None
     # TODO: Accept an argument for pre-release
@@ -299,6 +303,18 @@ def download_asset(
     extract_files: Optional[list[str]] = None,
     destination: Optional[Path] = None,
 ) -> list[Path]:
+    """Download asset from entity passed in
+
+    Extracts files from archives if provided. Any empty list will extract all files
+
+    Args
+        `asset`: asset dictionary as returned from API
+        `extract_files`: optional list of file paths to extract. An empty list will extract all
+        `destination`: destination directory to put the downloaded assset
+
+    Returns
+        list of Path objects containing all extracted files
+    """
     if destination is None:
         destination = Path.cwd()
 
@@ -362,7 +378,7 @@ class MapAddAction(argparse.Action):
         setattr(namespace, self.dest, dest)
 
 
-def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
+def _parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "format",
@@ -426,7 +442,7 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
         "--extract-files",
         "-e",
         action="append",
-        help="A list of file name to extract from downloaded archive",
+        help="A list of file names to extract from downloaded archive",
     )
     parser.add_argument(
         "--extract-all",
@@ -444,7 +460,7 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
 
     # Merge in fields from args and git remote
     if not all((parsed_args.owner, parsed_args.repo, parsed_args.hostname)):
-        remote_info = get_git_remote(parsed_args.git_url)
+        remote_info = parse_git_remote(parsed_args.git_url)
 
         def merge_field(a, b, field):
             value = getattr(a, field)
@@ -466,10 +482,37 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     return parsed_args
 
 
-def main():
-    args = parse_args()
+def download_release(
+    remote_info: GitRemoteInfo,
+    destination: Path,
+    format: str,
+    version: Optional[str] = None,
+    system_mapping: Optional[dict[str, str]] = None,
+    arch_mapping: Optional[dict[str, str]] = None,
+    extract_files: Optional[list[str]] = None,
+) -> list[Path]:
+    """Convenience method for fetching, downloading and extracting a release"""
+    release = fetch_release(remote_info)
+    asset = match_asset(
+        release,
+        format,
+        version=version,
+        system_mapping=system_mapping,
+        arch_mapping=arch_mapping,
+    )
+    files = download_asset(
+        asset,
+        extract_files=extract_files,
+        destination=destination,
+    )
 
-    release = get_release(
+    return files
+
+
+def main():
+    args = _parse_args()
+
+    release = fetch_release(
         GitRemoteInfo(args.hostname, args.owner, args.repo), args.version
     )
     asset = match_asset(

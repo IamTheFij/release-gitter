@@ -15,7 +15,7 @@ PACKAGE_NAME = "pseudo"
 
 
 def download(config) -> list[Path]:
-    release = rg.get_release(
+    release = rg.fetch_release(
         rg.GitRemoteInfo(config.hostname, config.owner, config.repo), config.version
     )
     asset = rg.match_asset(
@@ -54,7 +54,7 @@ def read_metadata():
         else:
             args = [key, value] + args
 
-    return rg.parse_args(args)
+    return rg._parse_args(args)
 
 
 class _PseudoBuildBackend:
