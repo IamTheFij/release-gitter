@@ -436,7 +436,9 @@ def _parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
         help="Map a platform.machine() value to a custom value",
     )
     parser.add_argument(
-        "--exec", "-c", help="Shell commands to execute after download or extraction"
+        "--exec",
+        "-c",
+        help="Shell commands to execute after download or extraction. {} will be expanded to the downloaded asset name.",
     )
     parser.add_argument(
         "--extract-files",
@@ -537,7 +539,7 @@ def main():
 
     # Optionally execute post command
     if args.exec:
-        check_call(args.exec, shell=True)
+        check_call(args.exec.format(asset["name"]), shell=True)
 
 
 if __name__ == "__main__":
