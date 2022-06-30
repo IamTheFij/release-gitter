@@ -4,6 +4,7 @@ release-gitter based on a pyproject.toml file. It's a total hack...
 """
 from pathlib import Path
 from shutil import copytree
+from shutil import move
 
 import toml
 from wheel.wheelfile import WheelFile
@@ -123,13 +124,12 @@ class _PseudoBuildBackend:
         wheel_scripts = wheel_directory / f"{PACKAGE_NAME}-{version}.data/scripts"
         wheel_scripts.mkdir(parents=True, exist_ok=True)
 
-        # copytree(metadata_directory, wheel_directory / metadata_directory.name)
         copytree(metadata_directory, wheel_directory / metadata_directory.name)
 
         metadata = read_metadata()
         files = download(metadata)
         for file in files:
-            file.rename(wheel_scripts / file.name)
+            move(file, wheel_scripts / file.name)
 
         print(f"ls {wheel_directory}: {list(wheel_directory.glob('*'))}")
 
