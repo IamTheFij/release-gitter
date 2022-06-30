@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 from pathlib import Path
 from typing import Any
@@ -111,27 +113,23 @@ class TestVersionInfo(unittest.TestCase):
             version = release_gitter.read_version()
             self.assertIsNone(version)
 
-    def test_cargo_file_has_version(self):
-        with (
-            patch("pathlib.Path.exists", return_value=True),
-            patch(
-                "pathlib.Path.open",
-                mock_open(read_data="\n".join(["[package]", 'version = "1.0.0"'])),
-            ),
-        ):
-            version = release_gitter.read_version()
-            self.assertEqual(version, "1.0.0")
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch(
+        "pathlib.Path.open",
+        mock_open(read_data="\n".join(["[package]", 'version = "1.0.0"'])),
+    )
+    def test_cargo_file_has_version(self, *_):
+        version = release_gitter.read_version()
+        self.assertEqual(version, "1.0.0")
 
-    def test_cargo_file_missing_version(self):
-        with (
-            patch("pathlib.Path.exists", return_value=True),
-            patch(
-                "pathlib.Path.open",
-                mock_open(read_data="\n".join(["[package]"])),
-            ),
-        ):
-            with self.assertRaises(ValueError):
-                release_gitter.read_version()
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch(
+        "pathlib.Path.open",
+        mock_open(read_data="\n".join(["[package]"])),
+    )
+    def test_cargo_file_missing_version(self, *_):
+        with self.assertRaises(ValueError):
+            release_gitter.read_version()
 
 
 if __name__ == "__main__":

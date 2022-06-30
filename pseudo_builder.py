@@ -2,6 +2,8 @@
 This builder functions as a pseudo builder that instead downloads and installs a binary file using
 release-gitter based on a pyproject.toml file. It's a total hack...
 """
+from __future__ import annotations
+
 from pathlib import Path
 from shutil import copytree
 from shutil import move
