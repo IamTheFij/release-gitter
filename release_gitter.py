@@ -1,4 +1,6 @@
 #! /usr/bin/env python3
+from __future__ import annotations
+
 import argparse
 import platform
 from collections.abc import Sequence
@@ -91,7 +93,14 @@ def parse_git_remote(git_url: Optional[str] = None) -> GitRemoteInfo:
             f"{path[1:3]} Could not parse owner and repo from URL {git_url}"
         )
 
-    return GitRemoteInfo(u.hostname, path[1], path[2].removesuffix(".git"))
+    repo = path[2]
+    try:
+        repo = repo.removesuffix(".git")  # type: ignore
+    except AttributeError:
+        # Py < 3.9
+        repo = repo[: -len(".git")] if repo and repo.endswith(".git") else repo
+
+    return GitRemoteInfo(u.hostname, path[1], repo)
 
 
 def parse_cargo_version(p: Path) -> str:
