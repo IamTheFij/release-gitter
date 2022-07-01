@@ -28,6 +28,24 @@ class InvalidRemoteError(ValueError):
     pass
 
 
+def removeprefix(s: str, pre: str) -> str:
+    # Duplicate str.removeprefix for py<3.9
+    try:
+        return s.removeprefix(pre)  # type: ignore
+    except AttributeError:
+        # Py < 3.9
+        return s[len(pre) :] if s and s.startswith(pre) else s
+
+
+def removesuffix(s: str, suf: str) -> str:
+    # Duplicate str.removesuffix for py<3.9
+    try:
+        return s.removesuffix(suf)  # type: ignore
+    except AttributeError:
+        # Py < 3.9
+        return s[: -len(suf)] if s and s.endswith(suf) else s
+
+
 @dataclass
 class GitRemoteInfo:
     hostname: str
@@ -93,14 +111,7 @@ def parse_git_remote(git_url: Optional[str] = None) -> GitRemoteInfo:
             f"{path[1:3]} Could not parse owner and repo from URL {git_url}"
         )
 
-    repo = path[2]
-    try:
-        repo = repo.removesuffix(".git")  # type: ignore
-    except AttributeError:
-        # Py < 3.9
-        repo = repo[: -len(".git")] if repo and repo.endswith(".git") else repo
-
-    return GitRemoteInfo(u.hostname, path[1], repo)
+    return GitRemoteInfo(u.hostname, path[1], removesuffix(path[2], ".git"))
 
 
 def parse_cargo_version(p: Path) -> str:

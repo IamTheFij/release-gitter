@@ -12,6 +12,7 @@ import toml
 from wheel.wheelfile import WheelFile
 
 import release_gitter as rg
+from release_gitter import removeprefix
 
 
 PACKAGE_NAME = "pseudo"
@@ -71,7 +72,7 @@ class _PseudoBuildBackend:
         print("Prepare meta", metadata_directory, config_settings)
 
         metadata = read_metadata()
-        version = metadata.version.removeprefix("v")
+        version = removeprefix(metadata.version, "v")
 
         # Returns distinfo dir?
         dist_info = Path(metadata_directory) / f"{PACKAGE_NAME}-{version}.dist-info"
@@ -118,7 +119,7 @@ class _PseudoBuildBackend:
         metadata_directory = Path(metadata_directory)
 
         metadata = read_metadata()
-        version = metadata.version.removeprefix("v")
+        version = removeprefix(metadata.version, "v")
 
         wheel_directory = Path(wheel_directory)
         wheel_directory.mkdir(exist_ok=True)

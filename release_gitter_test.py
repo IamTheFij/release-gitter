@@ -20,7 +20,7 @@ class TestExpression(NamedTuple):
     args: list[Any]
     kwargs: dict[str, Any]
     expected: Any
-    exception: Optional[type[Exception]]
+    exception: Optional[type[Exception]] = None
 
     def run(self, f: Callable):
         with self.t.subTest(f=f, args=self.args, kwargs=self.kwargs):
@@ -36,6 +36,15 @@ class TestExpression(NamedTuple):
                 if self.exception and isinstance(e, self.exception):
                     return e
                 raise
+
+
+class TestGeneral(unittest.TestCase):
+    def test_removesuffix(self):
+        for test_case in (
+            TestExpression(self, ["repo.git", ".git"], {}, "repo"),
+            TestExpression(self, ["repo", ".git"], {}, "repo"),
+        ):
+            test_case.run(release_gitter.removesuffix)
 
 
 class TestRemoteInfo(unittest.TestCase):
