@@ -111,7 +111,6 @@ def push_to_pypi():
         "depends_on": ["tests"],
         "workspace": get_workspace(),
         "trigger": {
-            "event": ["tag"],
             "ref": [
                 "refs/heads/main",
                 "refs/tags/v*",
