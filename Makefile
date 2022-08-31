@@ -67,7 +67,8 @@ upload: verify-tag-version build $(ENV)/bin/twine
 # Uses twine to upload to test pypi
 .PHONY: upload-test
 upload-test: build $(ENV)/bin/twine
-	$(ENV)/bin/twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	$(ENV)/bin/twine check dist/*
+	$(ENV)/bin/twine upload --skip-existing --repository-url https://test.pypi.org/legacy/ dist/*
 
 # Cleans all build, runtime, and test artifacts
 .PHONY: clean
