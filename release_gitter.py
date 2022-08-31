@@ -270,7 +270,10 @@ class PackageAdapter:
 
     def __init__(self, content_type: str, response: requests.Response):
         self._package: Union[TarFile, ZipFile]
-        if content_type == "application/zip":
+        if content_type in (
+            "application/zip",
+            "application/x-zip-compressed",
+        ):
             self._package = ZipFile(BytesIO(response.content))
         elif content_type == "application/x-tar":
             self._package = TarFile(fileobj=response.raw)
