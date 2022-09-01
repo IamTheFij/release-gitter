@@ -13,15 +13,10 @@ from subprocess import check_output
 from tarfile import TarFile
 from tarfile import TarInfo
 from typing import Any
-from typing import Optional
-from typing import Union
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
 import requests
-
-
-# Extract metadata from repo
 
 
 class UnsupportedContentTypeError(ValueError):
@@ -52,6 +47,8 @@ def removesuffix(s: str, suf: str) -> str:
 
 @dataclass
 class GitRemoteInfo:
+    """Extracts information about a repository"""
+
     hostname: str
     owner: str
     repo: str
@@ -89,7 +86,7 @@ class GitRemoteInfo:
         )
 
 
-def parse_git_remote(git_url: Optional[str] = None) -> GitRemoteInfo:
+def parse_git_remote(git_url: str | None = None) -> GitRemoteInfo:
     """Extract Github repo info from a git remote url"""
     if not git_url:
         git_url = (
@@ -128,7 +125,7 @@ def parse_cargo_version(p: Path) -> str:
     raise ValueError(f"No version found in {p}")
 
 
-def read_git_tag(fetch: bool = True) -> Optional[str]:
+def read_git_tag(fetch: bool = True) -> str | None:
     """Get local git tag for current repo
 
     fetch: optionally fetch tags with depth of 1 from remote"""
@@ -139,7 +136,7 @@ def read_git_tag(fetch: bool = True) -> Optional[str]:
     return git_tag or None
 
 
-def read_version(from_tags: bool = False, fetch: bool = False) -> Optional[str]:
+def read_version(from_tags: bool = False, fetch: bool = False) -> str | None:
     """Read version information from file or from git"""
     if from_tags:
         return read_git_tag(fetch)
@@ -158,12 +155,9 @@ def read_version(from_tags: bool = False, fetch: bool = False) -> Optional[str]:
     return None
 
 
-# Fetch release and assets from Github
-
-
 def fetch_release(
     remote: GitRemoteInfo,
-    version: Optional[str] = None
+    version: str | None = None
     # TODO: Accept an argument for pre-release
 ) -> dict[Any, Any]:
     """Fetches a release object from a Github repo
@@ -193,9 +187,9 @@ def fetch_release(
 def match_asset(
     release: dict[Any, Any],
     format: str,
-    version: Optional[str] = None,
-    system_mapping: Optional[dict[str, str]] = None,
-    arch_mapping: Optional[dict[str, str]] = None,
+    version: str | None = None,
+    system_mapping: dict[str, str] | None = None,
+    arch_mapping: dict[str, str] | None = None,
 ) -> dict[Any, Any]:
     """Accepts a release and searches for an appropriate asset attached using
     a provided template and some alternative mappings for version, system, and machine info
@@ -273,7 +267,7 @@ class PackageAdapter:
     """Adapts the names and extractall methods from ZipFile and TarFile classes"""
 
     def __init__(self, content_type: str, response: requests.Response):
-        self._package: Union[TarFile, ZipFile]
+        self._package: TarFile | ZipFile
         if content_type in (
             "application/zip",
             "application/x-zip-compressed",
@@ -306,8 +300,8 @@ class PackageAdapter:
 
     def extractall(
         self,
-        path: Optional[Path],
-        members: Optional[list[str]],
+        path: Path | None,
+        members: list[str] | None,
     ) -> list[str]:
         """Extract all or a subset of files from the package
 
@@ -351,8 +345,8 @@ def get_asset_package(
 
 def download_asset(
     asset: dict[Any, Any],
-    extract_files: Optional[list[str]] = None,
-    destination: Optional[Path] = None,
+    extract_files: list[str] | None = None,
+    destination: Path | None = None,
 ) -> list[Path]:
     """Download asset from entity passed in
 
@@ -388,8 +382,8 @@ class MapAddAction(argparse.Action):
         self,
         _: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: Union[str, Sequence[Any], None],
-        option_string: Optional[str] = None,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
     ):
         # Validate that required value has something
         if self.required and not values:
@@ -419,7 +413,7 @@ class MapAddAction(argparse.Action):
         setattr(namespace, self.dest, dest)
 
 
-def _parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
+def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "format",
@@ -529,10 +523,10 @@ def download_release(
     remote_info: GitRemoteInfo,
     destination: Path,
     format: str,
-    version: Optional[str] = None,
-    system_mapping: Optional[dict[str, str]] = None,
-    arch_mapping: Optional[dict[str, str]] = None,
-    extract_files: Optional[list[str]] = None,
+    version: str | None = None,
+    system_mapping: dict[str, str] | None = None,
+    arch_mapping: dict[str, str] | None = None,
+    extract_files: list[str] | None = None,
 ) -> list[Path]:
     """Convenience method for fetching, downloading and extracting a release"""
     release = fetch_release(remote_info)
