@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from tarfile import TarFile
 from typing import Any
 from typing import Callable
 from typing import NamedTuple
@@ -9,6 +10,7 @@ from typing import Optional
 from unittest.mock import MagicMock
 from unittest.mock import mock_open
 from unittest.mock import patch
+from zipfile import ZipFile
 
 import requests
 
@@ -139,6 +141,61 @@ class TestVersionInfo(unittest.TestCase):
     def test_cargo_file_missing_version(self, *_):
         with self.assertRaises(ValueError):
             release_gitter.read_version()
+
+
+@patch("release_gitter.ZipFile", autospec=True)
+@patch("release_gitter.BytesIO", autospec=True)
+class TestContentTypeDetection(unittest.TestCase):
+    def test_asset_encoding_priority(self, *_):
+        package = release_gitter.get_asset_package(
+            {
+                "content_type": "application/x-tar",
+                "name": "test.zip",
+            },
+            MagicMock(spec=["raw", "content"]),
+        )
+        # Tar should take priority over the file name zip extension
+        self.assertIsInstance(package._package, TarFile)
+
+    def test_fallback_to_supported_encoding(self, *_):
+        package = release_gitter.get_asset_package(
+            {
+                "content_type": "application/octetstream",
+                "name": "test.zip",
+            },
+            MagicMock(spec=["raw", "content"]),
+        )
+        # Should fall back to zip extension
+        self.assertIsInstance(package._package, ZipFile)
+
+    def test_missing_only_name_content_type(self, *_):
+        package = release_gitter.get_asset_package(
+            {
+                "name": "test.zip",
+            },
+            MagicMock(spec=["raw", "content"]),
+        )
+        # Should fall back to zip extension
+        self.assertIsInstance(package._package, ZipFile)
+
+    def test_no_content_types(self, *_):
+        with self.assertRaises(release_gitter.UnsupportedContentTypeError):
+            release_gitter.get_asset_package(
+                {
+                    "name": "test",
+                },
+                MagicMock(spec=["raw", "content"]),
+            )
+
+    def test_no_supported_content_types(self, *_):
+        with self.assertRaises(release_gitter.UnsupportedContentTypeError):
+            release_gitter.get_asset_package(
+                {
+                    "content_type": "application/octetstream",
+                    "name": "test",
+                },
+                MagicMock(spec=["raw", "content"]),
+            )
 
 
 if __name__ == "__main__":

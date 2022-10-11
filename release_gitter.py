@@ -24,6 +24,10 @@ import requests
 # Extract metadata from repo
 
 
+class UnsupportedContentTypeError(ValueError):
+    pass
+
+
 class InvalidRemoteError(ValueError):
     pass
 
@@ -285,7 +289,9 @@ class PackageAdapter:
         ):
             self._package = TarFile.open(fileobj=BytesIO(response.content), mode="r:*")
         else:
-            raise ValueError(f"Unknown or unsupported content type {content_type}")
+            raise UnsupportedContentTypeError(
+                f"Unknown or unsupported content type {content_type}"
+            )
 
     def get_names(self) -> list[str]:
         """Get list of all file names in package"""
@@ -322,6 +328,27 @@ class PackageAdapter:
         return members
 
 
+def get_asset_package(
+    asset: dict[str, Any], result: requests.Response
+) -> PackageAdapter:
+    possible_content_types = (
+        asset.get("content_type"),
+        "+".join(t for t in guess_type(asset["name"]) if t is not None),
+    )
+    for content_type in possible_content_types:
+        if not content_type:
+            continue
+
+        try:
+            return PackageAdapter(content_type, result)
+        except UnsupportedContentTypeError:
+            continue
+    else:
+        raise UnsupportedContentTypeError(
+            "Cannot extract files from archive because we don't recognize the content type"
+        )
+
+
 def download_asset(
     asset: dict[Any, Any],
     extract_files: Optional[list[str]] = None,
@@ -344,18 +371,8 @@ def download_asset(
 
     result = requests.get(asset["browser_download_url"])
 
-    content_type = asset.get(
-        "content_type",
-        guess_type(asset["name"]),
-    )
     if extract_files is not None:
-        if isinstance(content_type, tuple):
-            content_type = "+".join(t for t in content_type if t is not None)
-        if not content_type:
-            raise TypeError(
-                "Cannot extract files from archive because we don't recognize the content type"
-            )
-        package = PackageAdapter(content_type, result)
+        package = get_asset_package(asset, result)
         extract_files = package.extractall(path=destination, members=extract_files)
         return [destination / name for name in extract_files]
 
