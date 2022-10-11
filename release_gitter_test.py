@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import unittest
-from pathlib import Path
 from tarfile import TarFile
 from typing import Any
 from typing import Callable

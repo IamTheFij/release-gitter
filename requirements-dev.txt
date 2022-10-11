@@ -1,4 +1,6 @@
 -e .
-pytest
 coverage
+mypy
 pre-commit
+types-requests
+types-toml
