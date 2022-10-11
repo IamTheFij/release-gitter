@@ -280,6 +280,7 @@ class PackageAdapter:
         elif content_type in (
             "application/gzip",
             "application/x-tar+gzip",
+            "application/x-tar+xz",
             "application/x-compressed-tar",
         ):
             self._package = TarFile.open(fileobj=BytesIO(response.content), mode="r:*")
