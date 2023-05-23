@@ -157,8 +157,8 @@ def read_version(from_tags: bool = False, fetch: bool = False) -> str | None:
 
 def fetch_release(
     remote: GitRemoteInfo,
-    version: str | None = None
-    # TODO: Accept an argument for pre-release
+    version: str | None = None,
+    pre_release=False,
 ) -> dict[Any, Any]:
     """Fetches a release object from a Github repo
 
@@ -174,14 +174,21 @@ def fetch_release(
 
     # Return the latest if requested
     if version is None or version == "latest":
-        return result.json()[0]
+        for release in result.json():
+            if release["prerelease"] and not pre_release:
+                continue
+
+            return release
 
     # Return matching version
     for release in result.json():
         if release["tag_name"].endswith(version):
             return release
 
-    raise ValueError(f"Could not find release version ending in {version}")
+    raise ValueError(
+        f"Could not find release version ending in {version}."
+        f"{ ' Is it a pre-release?' if not pre_release else ''}"
+    )
 
 
 def match_asset(
@@ -448,6 +455,11 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
         help="Release version to download. If not provied, it will look for project metadata",
     )
     parser.add_argument(
+        "--prerelease",
+        action="store_true",
+        help="Include pre-release versions in search",
+    )
+    parser.add_argument(
         "--version-git-tag",
         "-t",
         action="store_true",
@@ -527,9 +539,14 @@ def download_release(
     system_mapping: dict[str, str] | None = None,
     arch_mapping: dict[str, str] | None = None,
     extract_files: list[str] | None = None,
+    pre_release=False,
 ) -> list[Path]:
     """Convenience method for fetching, downloading and extracting a release"""
-    release = fetch_release(remote_info, version=version)
+    release = fetch_release(
+        remote_info,
+        version=version,
+        pre_release=pre_release,
+    )
     asset = match_asset(
         release,
         format,
@@ -550,7 +567,9 @@ def main():
     args = _parse_args()
 
     release = fetch_release(
-        GitRemoteInfo(args.hostname, args.owner, args.repo), args.version
+        GitRemoteInfo(args.hostname, args.owner, args.repo),
+        version=args.version,
+        pre_release=args.prerelease,
     )
     asset = match_asset(
         release,
