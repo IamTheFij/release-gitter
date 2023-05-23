@@ -529,7 +529,7 @@ def download_release(
     extract_files: list[str] | None = None,
 ) -> list[Path]:
     """Convenience method for fetching, downloading and extracting a release"""
-    release = fetch_release(remote_info)
+    release = fetch_release(remote_info, version=version)
     asset = match_asset(
         release,
         format,
