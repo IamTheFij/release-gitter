@@ -434,6 +434,7 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
         default=Path.cwd(),
         help="Destination directory. Defaults to current directory",
     )
+    parser.add_argument("-v", action="store_true", help="verbose logging")
     parser.add_argument(
         "--hostname",
         help="Git repository hostname",
@@ -452,7 +453,7 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--version",
-        help="Release version to download. If not provied, it will look for project metadata",
+        help="Release version to download. If not provided, it will look for project metadata",
     )
     parser.add_argument(
         "--prerelease",
@@ -578,6 +579,9 @@ def main():
         system_mapping=args.map_system,
         arch_mapping=args.map_arch,
     )
+
+    if args.v:
+        print(f"Downloading {asset['name']} from release {release['name']}")
 
     if args.url_only:
         print(asset["browser_download_url"])
