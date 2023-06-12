@@ -495,13 +495,13 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
         "--extract-files",
         "-e",
         action="append",
-        help="A list of file names to extract from downloaded archive",
+        help="A list of file names to extract from the downloaded archive",
     )
     parser.add_argument(
         "--extract-all",
         "-x",
         action="store_true",
-        help="Shell commands to execute after download or extraction",
+        help="Extract all files from the downloaded archive",
     )
     parser.add_argument(
         "--url-only",
