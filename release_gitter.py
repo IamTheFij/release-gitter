@@ -319,7 +319,8 @@ class PackageAdapter:
             self._package.extractall(path=path)
             return self.get_names()
 
-        if missing_members := set(members) - set(self.get_names()):
+        missing_members = set(members) - set(self.get_names())
+        if missing_members:
             raise ValueError(f"Missing members: {missing_members}")
 
         if isinstance(self._package, ZipFile):
