@@ -18,6 +18,8 @@ from zipfile import ZipFile
 
 import requests
 
+__version__ = "2.1.1"
+
 
 class UnsupportedContentTypeError(ValueError):
     pass

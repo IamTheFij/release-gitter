@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "release-gitter"
-version = "2.1.1"
+dynamic = ["version"]
 description = "Easily download releases from sites like Github and Gitea"
 readme = "README.md"
 license = "MIT"
@@ -33,6 +33,9 @@ release-gitter = "release_gitter:main"
 
 [project.urls]
 Homepage = "https://git.iamthefij.com/iamthefij/release-gitter"
+
+[tool.hatch.version]
+path = "release_gitter.py"
 
 [tool.hatch.build]
 include = ["release_gitter.py", "pseudo_builder.py"]
