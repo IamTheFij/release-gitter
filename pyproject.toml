@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "release-gitter"
+version = "2.1.1"
+description = "Easily download releases from sites like Github and Gitea"
+readme = "README.md"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+authors = [
+    { name = "Ian Fijolek", email = "iamthefij@gmail.com" }
+]
+maintainers = [
+    { name = "Ian Fijolek", email = "iamthefij@gmail.com" }
+]
+requires_python = ">=3.7"
+dependencies = ["requests"]
+
+[project.optional-dependencies]
+builder = [
+    "toml",
+    "wheel",
+]
+
+[project.scripts]
+release-gitter = "release_gitter:main"
+
+[project.urls]
+Homepage = "https://git.iamthefij.com/iamthefij/release-gitter"
+
+[tool.hatch.build]
+include = ["release_gitter.py", "pseudo_builder.py"]
