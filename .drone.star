@@ -123,7 +123,7 @@ def push_to_pypi():
         "workspace": get_workspace(),
         "trigger": {
             "ref": [
-                "refs/heads/main",
+                # "refs/heads/main",
                 "refs/tags/v*",
             ],
         },
