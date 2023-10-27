@@ -128,19 +128,19 @@ def push_to_pypi():
             ],
         },
         "steps": [
-            {
-                "name": "push to test pypi",
-                "image": "python:3",
-                "environment": {
-                    "HATCH_INDEX_USER": {
-                        "from_secret": "PYPI_USERNAME",
-                    },
-                    "HATCH_INDEX_AUTH": {
-                        "from_secret": "TEST_PYPI_PASSWORD",
-                    },
-                },
-                "commands": ["make upload-test"],
-            },
+            # {
+            #     "name": "push to test pypi",
+            #     "image": "python:3",
+            #     "environment": {
+            #         "HATCH_INDEX_USER": {
+            #             "from_secret": "PYPI_USERNAME",
+            #         },
+            #         "HATCH_INDEX_AUTH": {
+            #             "from_secret": "TEST_PYPI_PASSWORD",
+            #         },
+            #     },
+            #     "commands": ["make upload-test"],
+            # },
             {
                 "name": "push to pypi",
                 "image": "python:3",
