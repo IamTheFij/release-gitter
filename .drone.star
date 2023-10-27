@@ -43,24 +43,20 @@ def tests():
         "name": "tests",
         "workspace": get_workspace(),
         "steps": [
-            tox_step("python:"+version)
+            test_step("python:"+version)
             for version in PYTHON_VERSIONS
         ],
     }]
 
 
 # Builds a single python test step
-def tox_step(docker_tag, python_cmd="python", tox_env="py3"):
+def test_step(docker_tag, python_cmd="python"):
     return {
         "name": "test {}".format(docker_tag.replace(":", "")),
         "image": docker_tag,
-        "environment": {
-            "TOXENV": tox_env,
-        },
         "commands": [
             "{} -V".format(python_cmd),
-            "pip install tox",
-            "tox",
+            "make test"
         ],
     }
 
@@ -123,10 +119,10 @@ def push_to_pypi():
                 "name": "push to test pypi",
                 "image": "python:3",
                 "environment": {
-                    "TWINE_USERNAME": {
+                    "HATCH_INDEX_USER": {
                         "from_secret": "PYPI_USERNAME",
                     },
-                    "TWINE_PASSWORD": {
+                    "HATCH_INDEX_AUTH": {
                         "from_secret": "TEST_PYPI_PASSWORD",
                     },
                 },
@@ -136,10 +132,10 @@ def push_to_pypi():
                 "name": "push to pypi",
                 "image": "python:3",
                 "environment": {
-                    "TWINE_USERNAME": {
+                    "HATCH_INDEX_USER": {
                         "from_secret": "PYPI_USERNAME",
                     },
-                    "TWINE_PASSWORD": {
+                    "HATCH_INDEX_AUTH": {
                         "from_secret": "PYPI_PASSWORD",
                     },
                 },

@@ -1,5 +1,5 @@
 -e .
-coverage
+hatch
 mypy
 pre-commit
 types-requests

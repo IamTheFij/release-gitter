@@ -36,3 +36,26 @@ Homepage = "https://git.iamthefij.com/iamthefij/release-gitter"
 
 [tool.hatch.build]
 include = ["release_gitter.py", "pseudo_builder.py"]
+
+[tool.hatch.envs.test]
+dependencies = [
+    "coverage",
+]
+
+[tool.hatch.envs.test.scripts]
+run = [
+    "coverage erase",
+    "coverage run --source=release_gitter -m unittest discover . *_test.py",
+    "coverage report -m # --fail-under 70",
+]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["3", "3.7", "3.8", "3.9", "3.10", "3.11"]
+
+[tool.hatch.envs.lint]
+detached = true
+dependencies = ["pre-commit"]
+
+[tool.hatch.envs.lint.scripts]
+all = "pre-commit run --all-files"
+install-hooks = "pre-commit install --install-hooks"

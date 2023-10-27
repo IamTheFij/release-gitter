@@ -5,7 +5,7 @@ ENV := venv
 .PHONY: default
 default: test
 
-# Creates virtualenv
+# Creates de virtualenv
 $(ENV):
 	python3 -m venv $(ENV)
 
@@ -13,87 +13,74 @@ $(ENV):
 $(ENV)/bin/$(NAME): $(ENV)
 	$(ENV)/bin/pip install -r requirements-dev.txt
 
-# Install tox into virtualenv for running tests
-$(ENV)/bin/tox: $(ENV)
-	$(ENV)/bin/pip install tox
-
-# Install wheel for building packages
-$(ENV)/bin/wheel: $(ENV)
-	$(ENV)/bin/pip install wheel
-
-# Install twine for uploading packages
-$(ENV)/bin/twine: $(ENV)
-	$(ENV)/bin/pip install twine
+# Install hatch into virtualenv for running tests
+$(ENV)/bin/hatch: $(ENV)
+	$(ENV)/bin/pip install hatch
 
 # Installs dev requirements to virtualenv
 .PHONY: devenv
 devenv: $(ENV)/bin/$(NAME)
 
-# Generates a smaller env for running tox, which builds it's own env
-.PHONY: test-env
-test-env: $(ENV)/bin/tox
-
-# Generates a small build env for building and uploading dists
-.PHONY: build-env
-build-env: $(ENV)/bin/twine $(ENV)/bin/wheel
-
-# Runs package
-.PHONY: run
-run: $(ENV)/bin/$(NAME)
-	$(ENV)/bin/$(NAME)
-
-# Runs tests with tox
+# Runs tests for current python
 .PHONY: test
-test: $(ENV)/bin/tox
-	$(ENV)/bin/tox
+test: $(ENV)/bin/hatch
+	$(ENV)/bin/hatch run +py=3 test:run
+
+# Runs test matrix
+.PHONY: test-matrix
+test-matrix: $(ENV)/bin/hatch
+	$(ENV)/bin/hatch run test:run
 
 # Builds wheel for package to upload
 .PHONY: build
-build: $(ENV)/bin/wheel
-	$(ENV)/bin/python setup.py sdist
-	$(ENV)/bin/python setup.py bdist_wheel
+build: $(ENV)/bin/hatch
+	$(ENV)/bin/hatch build
 
 # Verify that the python version matches the git tag so we don't push bad shas
 .PHONY: verify-tag-version
 verify-tag-version:
 	$(eval TAG_NAME = $(shell [ -n "$(DRONE_TAG)" ] && echo $(DRONE_TAG) || git describe --tags --exact-match))
-	test "v$(shell python setup.py -V)" = "$(TAG_NAME)"
+	test "v$(shell $(ENV)/bin/hatch version)" = "$(TAG_NAME)"
 
-# Uses twine to upload to pypi
+# Upload to pypi
 .PHONY: upload
-upload: verify-tag-version build $(ENV)/bin/twine
-	$(ENV)/bin/twine upload dist/*
+upload: verify-tag-version build
+	$(ENV)/bin/hatch publish
 
 # Uses twine to upload to test pypi
 .PHONY: upload-test
-upload-test: build $(ENV)/bin/twine
-	$(ENV)/bin/twine check dist/*
-	$(ENV)/bin/twine upload --skip-existing --repository-url https://test.pypi.org/legacy/ dist/*
+upload-test: build
+	$(ENV)/bin/hatch upload --repo test
 
 # Cleans all build, runtime, and test artifacts
 .PHONY: clean
 clean:
-	rm -fr ./build *.egg-info ./htmlcov ./.coverage ./.pytest_cache ./.tox
+	rm -fr ./build *.egg-info ./htmlcov ./.coverage ./.pytest_cache
 	find . -name '*.pyc' -delete
 	find . -name '__pycache__' -delete
 
 # Cleans dist and env
 .PHONY: dist-clean
 dist-clean: clean
+	-$(ENV)/bin/hatch env prune
 	rm -fr ./dist $(ENV)
+
+# Run linters
+.PHONY: lint
+lint: $(ENV)/bin/hatch
+	$(ENV)/bin/hatch run lint:all
 
 # Install pre-commit hooks
 .PHONY: install-hooks
 install-hooks: devenv
-	$(ENV)/bin/pre-commit install -f --install-hooks
+	$(ENV)/bin/hatch run lint:install-hooks
 
 # Generates test coverage
-.coverage:
-	$(ENV)/bin/tox
+.coverage: test
 
 # Builds coverage html
 htmlcov/index.html: .coverage
-	$(ENV)/bin/coverage html
+	$(ENV)/bin/hatch run coverage html
 
 # Opens coverage html in browser (on macOS and some Linux systems)
 .PHONY: open-coverage
@@ -107,7 +94,7 @@ docs-clean:
 
 # Builds docs
 docs/build/html/index.html:
-	$(ENV)/bin/tox -e docs
+	$(ENV)/bin/hatch run docs:build
 
 # Shorthand for building docs
 .PHONY: docs
