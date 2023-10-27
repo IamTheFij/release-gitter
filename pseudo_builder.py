@@ -4,7 +4,9 @@ release-gitter based on a pyproject.toml file. It's a total hack...
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
+from shutil import copy
 from shutil import copytree
 from shutil import move
 
@@ -18,7 +20,26 @@ from release_gitter import removeprefix
 PACKAGE_NAME = "pseudo"
 
 
-def download(config) -> list[Path]:
+@dataclass
+class Config:
+    format: str
+    git_url: str
+    hostname: str
+    owner: str
+    repo: str
+    version: str | None = None
+    pre_release: bool = False
+    version_git_tag: bool = False
+    version_git_no_fetch: bool = False
+    map_system: dict[str, str] | None = None
+    map_arch: dict[str, str] | None = None
+    exec: str | None = None
+    extract_all: bool = False
+    extract_files: list[str] | None = None
+    include_extra_files: list[str] | None = None
+
+
+def download(config: Config) -> list[Path]:
     release = rg.fetch_release(
         rg.GitRemoteInfo(config.hostname, config.owner, config.repo), config.version
     )
@@ -39,26 +60,35 @@ def download(config) -> list[Path]:
     return files
 
 
-def read_metadata():
+def read_metadata() -> Config:
     config = toml.load("pyproject.toml").get("tool", {}).get("release-gitter")
     if not config:
         raise ValueError("Must have configuration in [tool.release-gitter]")
 
-    args = []
-    for key, value in config.items():
-        key = "--" + key
-        if key == "--format":
-            args += [value]
-        elif isinstance(value, dict):
-            for sub_key, sub_value in value.items():
-                args = [key, f"{sub_key}={sub_value}"] + args
-        elif isinstance(value, list):
-            for sub_value in value:
-                args = [key, sub_value] + args
-        else:
-            args = [key, value] + args
+    git_url = config.pop("git-url")
+    remote_info = rg.parse_git_remote(git_url)
 
-    return rg._parse_args(args)
+    args = Config(
+        format=config.pop("format"),
+        git_url=git_url,
+        hostname=config.pop("hostname", remote_info.hostname),
+        owner=config.pop("owner", remote_info.owner),
+        repo=config.pop("repo", remote_info.repo),
+    )
+
+    for key, value in config.items():
+        setattr(args, str(key).replace("-", "_"), value)
+
+    if args.version is None:
+        args.version = rg.read_version(
+            args.version_git_tag,
+            not args.version_git_no_fetch,
+        )
+
+    if args.extract_all:
+        args.extract_files = []
+
+    return args
 
 
 class _PseudoBuildBackend:
@@ -68,11 +98,11 @@ class _PseudoBuildBackend:
     def prepare_metadata_for_build_wheel(
         self, metadata_directory, config_settings=None
     ):
-        # Createa  .dist-info directory containing wheel metadata inside metadata_directory. Eg {metadata_directory}/{package}-{version}.dist-info/
+        # Create a .dist-info directory containing wheel metadata inside metadata_directory. Eg {metadata_directory}/{package}-{version}.dist-info/
         print("Prepare meta", metadata_directory, config_settings)
 
         metadata = read_metadata()
-        version = removeprefix(metadata.version, "v")
+        version = removeprefix(metadata.version, "v") if metadata.version else "0.0.0"
 
         # Returns distinfo dir?
         dist_info = Path(metadata_directory) / f"{PACKAGE_NAME}-{version}.dist-info"
@@ -119,7 +149,7 @@ class _PseudoBuildBackend:
         metadata_directory = Path(metadata_directory)
 
         metadata = read_metadata()
-        version = removeprefix(metadata.version, "v")
+        version = removeprefix(metadata.version, "v") if metadata.version else "0.0.0"
 
         wheel_directory = Path(wheel_directory)
         wheel_directory.mkdir(exist_ok=True)
@@ -134,7 +164,16 @@ class _PseudoBuildBackend:
         for file in files:
             move(file, wheel_scripts / file.name)
 
-        print(f"ls {wheel_directory}: {list(wheel_directory.glob('*'))}")
+        for file_name in metadata.include_extra_files or []:
+            file = Path(file_name)
+            if Path.cwd() in file.absolute().parents:
+                copy(file_name, wheel_scripts / file)
+            else:
+                raise ValueError(
+                    f"Cannot include any path that is not within the current directory: {file_name}"
+                )
+
+        print(f"ls {wheel_directory}: {list(wheel_directory.rglob('*'))}")
 
         wheel_filename = f"{PACKAGE_NAME}-{version}-py2.py3-none-any.whl"
         with WheelFile(wheel_directory / wheel_filename, "w") as wf:
