@@ -50,7 +50,7 @@ upload: verify-tag-version build
 # Uses twine to upload to test pypi
 .PHONY: upload-test
 upload-test: build
-	$(ENV)/bin/hatch upload --repo test
+	$(ENV)/bin/hatch publish --repo test
 
 # Cleans all build, runtime, and test artifacts
 .PHONY: clean
