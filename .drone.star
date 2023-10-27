@@ -56,7 +56,7 @@ def test_step(docker_tag, python_cmd="python"):
         "image": docker_tag,
         "commands": [
             "{} -V".format(python_cmd),
-            "make test"
+            "make clean-all test"
         ],
     }
 
