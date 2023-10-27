@@ -38,7 +38,7 @@ build: $(ENV)/bin/hatch
 
 # Verify that the python version matches the git tag so we don't push bad shas
 .PHONY: verify-tag-version
-verify-tag-version:
+verify-tag-version: $(ENV)/bin/hatch
 	$(eval TAG_NAME = $(shell [ -n "$(DRONE_TAG)" ] && echo $(DRONE_TAG) || git describe --tags --exact-match))
 	test "v$(shell $(ENV)/bin/hatch version)" = "$(TAG_NAME)"
 
