@@ -19,7 +19,7 @@ authors = [
 maintainers = [
     { name = "Ian Fijolek", email = "iamthefij@gmail.com" }
 ]
-requires_python = ">=3.7"
+requires-python = ">=3.7"
 dependencies = ["requests"]
 
 [project.optional-dependencies]
