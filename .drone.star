@@ -15,6 +15,19 @@ def main(ctx):
 
     # Run tests
     pipelines += tests()
+    pipelines += [{
+        "kind": "pipeline",
+        "name": "lint",
+        "workspace": get_workspace(),
+        "steps": [{
+            "name": "lint",
+            "image": "python:3",
+            "commands": [
+                "python -V",
+                "make lint",
+            ]
+        }]
+    }]
 
     # Add pypi push pipeline
     pipelines += push_to_pypi()
@@ -106,7 +119,7 @@ def push_to_pypi():
     return [{
         "kind": "pipeline",
         "name": "deploy to pypi",
-        "depends_on": ["tests"],
+        "depends_on": ["tests", "lint"],
         "workspace": get_workspace(),
         "trigger": {
             "ref": [
