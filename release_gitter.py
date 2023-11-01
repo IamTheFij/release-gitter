@@ -6,6 +6,7 @@ import platform
 from collections.abc import Sequence
 from dataclasses import dataclass
 from io import BytesIO
+from itertools import product
 from mimetypes import guess_type
 from pathlib import Path
 from subprocess import check_call
@@ -45,6 +46,31 @@ def removesuffix(s: str, suf: str) -> str:
     except AttributeError:
         # Py < 3.9
         return s[: -len(suf)] if s and s.endswith(suf) else s
+
+
+SYSTEM_SYNONYMS: list[list[str]] = [
+    ["Darwin", "darwin", "MacOS", "macos", "macOS"],
+    ["Windows", "windows", "win", "win32", "win64"],
+    ["Linux", "linux"],
+]
+
+ARCH_SYNONYMS: list[list[str]] = [
+    ["arm"],
+    ["x86_64", "amd64", "AMD64"],
+    ["arm64", "aarch64", "armv8b", "armv8l"],
+    ["x86", "i386", "i686"],
+]
+
+
+def get_synonyms(value: str, thesaurus: list[list[str]]) -> list[str]:
+    """Gets synonym list for a given value."""
+    results = [value]
+
+    for l in thesaurus:
+        if value in l:
+            results += l
+
+    return results
 
 
 @dataclass
@@ -245,21 +271,29 @@ def match_asset(
 
     system = platform.system()
     if system_mapping:
-        system = system_mapping.get(system, system)
+        systems = [system_mapping.get(system, system)]
+    else:
+        systems = get_synonyms(system, SYSTEM_SYNONYMS)
 
     arch = platform.machine()
     if arch_mapping:
-        arch = arch_mapping.get(arch, arch)
+        archs = [arch_mapping.get(arch, arch)]
+    else:
+        archs = get_synonyms(arch, ARCH_SYNONYMS)
 
     expected_names = {
         format.format(
-            version=normalized_version,
-            system=system,
-            arch=arch,
+            version=version_opt,
+            system=system_opt,
+            arch=arch_opt,
         )
-        for normalized_version in (
-            version.lstrip("v"),
-            "v" + version if not version.startswith("v") else version,
+        for version_opt, system_opt, arch_opt in product(
+            (
+                version.lstrip("v"),
+                "v" + version if not version.startswith("v") else version,
+            ),
+            systems,
+            archs,
         )
     }
 
