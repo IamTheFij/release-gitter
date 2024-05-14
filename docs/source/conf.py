@@ -13,6 +13,8 @@
 # sys.path.insert(0, os.path.abspath('.'))
 # -- Project information -----------------------------------------------------
 
+from __future__ import annotations
+
 project = "release-gitter"
 copyright = "2021, iamthefij"
 author = "iamthefij"
