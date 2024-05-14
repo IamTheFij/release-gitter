@@ -5,7 +5,6 @@ from tarfile import TarFile
 from typing import Any
 from typing import Callable
 from typing import NamedTuple
-from typing import Optional
 from unittest.mock import MagicMock
 from unittest.mock import mock_open
 from unittest.mock import patch
@@ -21,7 +20,7 @@ class TestExpression(NamedTuple):
     args: list[Any]
     kwargs: dict[str, Any]
     expected: Any
-    exception: Optional[type[Exception]] = None
+    exception: type[Exception] | None = None
 
     def run(self, f: Callable):
         with self.t.subTest(f=f, args=self.args, kwargs=self.kwargs):
