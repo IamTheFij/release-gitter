@@ -10,6 +10,7 @@ from pathlib import Path
 from shutil import copy
 from shutil import copytree
 from shutil import move
+from subprocess import check_call
 
 import toml
 from wheel.wheelfile import WheelFile
@@ -39,7 +40,7 @@ class Config:
     include_extra_files: list[str] | None = None
 
 
-def download(config: Config) -> list[Path]:
+def download(config: Config, wheel_scripts: Path) -> list[Path]:
     release = rg.fetch_release(
         rg.GitRemoteInfo(config.hostname, config.owner, config.repo), config.version
     )
@@ -51,11 +52,13 @@ def download(config: Config) -> list[Path]:
         arch_mapping=config.map_arch,
     )
 
-    files = rg.download_asset(asset, extract_files=config.extract_files)
+    files = rg.download_asset(
+        asset, extract_files=config.extract_files, destination=wheel_scripts
+    )
 
     # Optionally execute post command
     if config.exec:
-        rg.check_call(config.exec, shell=True)
+        check_call(config.exec, shell=True, cwd=wheel_scripts)
 
     return files
 
@@ -160,9 +163,7 @@ class _PseudoBuildBackend:
         copytree(metadata_directory, wheel_directory / metadata_directory.name)
 
         metadata = read_metadata()
-        files = download(metadata)
-        for file in files:
-            move(file, wheel_scripts / file.name)
+        download(metadata, wheel_scripts)
 
         for file_name in metadata.include_extra_files or []:
             file = Path(file_name)
