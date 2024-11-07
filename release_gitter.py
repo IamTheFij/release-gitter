@@ -14,6 +14,7 @@ from subprocess import check_output
 from tarfile import TarFile
 from tarfile import TarInfo
 from typing import Any
+from typing import NamedTuple
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -71,6 +72,12 @@ def get_synonyms(value: str, thesaurus: list[list[str]]) -> list[str]:
             results += l
 
     return results
+
+
+class MatchedValues(NamedTuple):
+    version: str
+    system: str
+    arch: str
 
 
 @dataclass
@@ -225,7 +232,7 @@ def match_asset(
     version: str | None = None,
     system_mapping: dict[str, str] | None = None,
     arch_mapping: dict[str, str] | None = None,
-) -> dict[Any, Any]:
+) -> tuple[dict[Any, Any], MatchedValues]:
     """Accepts a release and searches for an appropriate asset attached using
     a provided template and some alternative mappings for version, system, and machine info
 
@@ -286,7 +293,7 @@ def match_asset(
             version=version_opt,
             system=system_opt,
             arch=arch_opt,
-        )
+        ): MatchedValues(version=version_opt, system=system_opt, arch=arch_opt)
         for version_opt, system_opt, arch_opt in product(
             (
                 version.lstrip("v"),
@@ -299,7 +306,7 @@ def match_asset(
 
     for asset in release["assets"]:
         if asset["name"] in expected_names:
-            return asset
+            return (asset, expected_names[asset["name"]])
 
     raise ValueError(
         f"Could not find asset named {expected_names} on release {release['name']}"
@@ -581,25 +588,40 @@ def download_release(
     arch_mapping: dict[str, str] | None = None,
     extract_files: list[str] | None = None,
     pre_release=False,
+    exec: str | None = None,
 ) -> list[Path]:
-    """Convenience method for fetching, downloading and extracting a release"""
+    """Convenience method for fetching, downloading, and extracting a release
+
+    This is slightly different than running off the commandline, it will execute the shell script
+    from the destination directory, not the current working directory.
+    """
     release = fetch_release(
         remote_info,
         version=version,
         pre_release=pre_release,
     )
-    asset = match_asset(
+    asset, matched_values = match_asset(
         release,
         format,
         version=version,
         system_mapping=system_mapping,
         arch_mapping=arch_mapping,
     )
+
+    formatted_files = (
+        [file.format(**matched_values._asdict()) for file in extract_files]
+        if extract_files
+        else None
+    )
+
     files = download_asset(
         asset,
-        extract_files=extract_files,
+        extract_files=formatted_files,
         destination=destination,
     )
+
+    if exec:
+        check_call(exec.format(asset["name"]), shell=True, cwd=destination)
 
     return files
 
@@ -607,15 +629,20 @@ def download_release(
 def main():
     args = _parse_args()
 
+    # Fetch the release
     release = fetch_release(
         GitRemoteInfo(args.hostname, args.owner, args.repo),
         version=args.version,
         pre_release=args.prerelease,
     )
-    asset = match_asset(
+
+    version = args.version or release["tag_name"]
+
+    # Find the asset to download using mapping rules
+    asset, matched_values = match_asset(
         release,
         args.format,
-        version=args.version,
+        version=version,
         system_mapping=args.map_system,
         arch_mapping=args.map_arch,
     )
@@ -627,9 +654,16 @@ def main():
         print(asset["browser_download_url"])
         return
 
+    # Format files to extract with version info, as this is sometimes included
+    formatted_files = (
+        [file.format(**matched_values._asdict()) for file in args.extract_files]
+        if args.extract_files
+        else None
+    )
+
     files = download_asset(
         asset,
-        extract_files=args.extract_files,
+        extract_files=formatted_files,
         destination=args.destination,
     )
 

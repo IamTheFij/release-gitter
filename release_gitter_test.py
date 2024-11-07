@@ -199,6 +199,13 @@ class TestContentTypeDetection(unittest.TestCase):
             )
 
 
+def first_result(f):
+    def wrapper(*args, **kwargs):
+        return f(*args, **kwargs)[0]
+
+    return wrapper
+
+
 class TestMatchAsset(unittest.TestCase):
     def test_match_asset_versions(self, *_):
         # Input variations:
@@ -233,7 +240,7 @@ class TestMatchAsset(unittest.TestCase):
             )
         ]
         for test_case in happy_cases:
-            test_case.run(release_gitter.match_asset)
+            test_case.run(first_result(release_gitter.match_asset))
 
     def test_match_asset_systems(self, *_):
         # Input variations:
@@ -347,7 +354,7 @@ class TestMatchAsset(unittest.TestCase):
             ),
         )
         for test_case in test_cases:
-            test_case.run(run_with_context)
+            test_case.run(first_result(run_with_context))
 
     def test_match_asset_archs(self, *_):
         # Input variations:
@@ -468,7 +475,7 @@ class TestMatchAsset(unittest.TestCase):
             ),
         )
         for test_case in test_cases:
-            test_case.run(run_with_context)
+            test_case.run(first_result(run_with_context))
 
 
 if __name__ == "__main__":

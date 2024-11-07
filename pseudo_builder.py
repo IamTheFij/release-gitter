@@ -9,8 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import copy
 from shutil import copytree
-from shutil import move
-from subprocess import check_call
 
 import toml
 from wheel.wheelfile import WheelFile
@@ -40,26 +38,18 @@ class Config:
 
 
 def download(config: Config, wheel_scripts: Path) -> list[Path]:
-    release = rg.fetch_release(
-        rg.GitRemoteInfo(config.hostname, config.owner, config.repo), config.version
-    )
-    asset = rg.match_asset(
-        release,
+    """Download and extract files to the wheel_scripts directory"""
+    return rg.download_release(
+        rg.GitRemoteInfo(config.hostname, config.owner, config.repo),
+        wheel_scripts,
         config.format,
         version=config.version,
         system_mapping=config.map_system,
         arch_mapping=config.map_arch,
+        extract_files=config.extract_files,
+        pre_release=config.pre_release,
+        exec=config.exec,
     )
-
-    files = rg.download_asset(
-        asset, extract_files=config.extract_files, destination=wheel_scripts
-    )
-
-    # Optionally execute post command
-    if config.exec:
-        check_call(config.exec, shell=True, cwd=wheel_scripts)
-
-    return files
 
 
 def read_metadata() -> Config:
