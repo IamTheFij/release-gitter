@@ -608,8 +608,13 @@ def download_release(
         arch_mapping=arch_mapping,
     )
 
+    format_fields = dict(
+        asset_name=asset["name"],
+        **matched_values._asdict(),
+    )
+
     formatted_files = (
-        [file.format(**matched_values._asdict()) for file in extract_files]
+        [file.format(**format_fields) for file in extract_files]
         if extract_files
         else None
     )
@@ -621,7 +626,9 @@ def download_release(
     )
 
     if exec:
-        check_call(exec.format(asset["name"]), shell=True, cwd=destination)
+        check_call(
+            exec.format(asset["name"], **format_fields), shell=True, cwd=destination
+        )
 
     return files
 
