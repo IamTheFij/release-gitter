@@ -31,24 +31,6 @@ class InvalidRemoteError(ValueError):
     pass
 
 
-def removeprefix(s: str, pre: str) -> str:
-    # Duplicate str.removeprefix for py<3.9
-    try:
-        return s.removeprefix(pre)  # type: ignore
-    except AttributeError:
-        # Py < 3.9
-        return s[len(pre) :] if s and s.startswith(pre) else s
-
-
-def removesuffix(s: str, suf: str) -> str:
-    # Duplicate str.removesuffix for py<3.9
-    try:
-        return s.removesuffix(suf)  # type: ignore
-    except AttributeError:
-        # Py < 3.9
-        return s[: -len(suf)] if s and s.endswith(suf) else s
-
-
 SYSTEM_SYNONYMS: list[list[str]] = [
     ["Darwin", "darwin", "MacOS", "macos", "macOS"],
     ["Windows", "windows", "win", "win32", "win64"],
@@ -147,7 +129,7 @@ def parse_git_remote(git_url: str | None = None) -> GitRemoteInfo:
             f"{path[1:3]} Could not parse owner and repo from URL {git_url}"
         )
 
-    return GitRemoteInfo(u.hostname, path[1], removesuffix(path[2], ".git"))
+    return GitRemoteInfo(u.hostname, path[1], path[2].removesuffix(".git"))
 
 
 def parse_cargo_version(p: Path) -> str:

@@ -41,15 +41,6 @@ class TestExpression(NamedTuple):
                 raise
 
 
-class TestGeneral(unittest.TestCase):
-    def test_removesuffix(self):
-        for test_case in (
-            TestExpression(self, ["repo.git", ".git"], {}, "repo"),
-            TestExpression(self, ["repo", ".git"], {}, "repo"),
-        ):
-            test_case.run(release_gitter.removesuffix)
-
-
 class TestRemoteInfo(unittest.TestCase):
     def test_parse_remote_info(self):
         for test_case in (

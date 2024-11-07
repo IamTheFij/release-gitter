@@ -14,7 +14,6 @@ import toml
 from wheel.wheelfile import WheelFile
 
 import release_gitter as rg
-from release_gitter import removeprefix
 
 
 @dataclass
@@ -96,7 +95,7 @@ class _PseudoBuildBackend:
         print("Prepare meta", metadata_directory, config_settings)
 
         metadata = read_metadata()
-        version = removeprefix(metadata.version, "v") if metadata.version else "0.0.0"
+        version = metadata.version.removeprefix("v") if metadata.version else "0.0.0"
 
         # Returns distinfo dir?
         dist_info = Path(metadata_directory) / f"{metadata.name}-{version}.dist-info"
@@ -145,7 +144,7 @@ class _PseudoBuildBackend:
         metadata_directory = Path(metadata_directory)
 
         metadata = read_metadata()
-        version = removeprefix(metadata.version, "v") if metadata.version else "0.0.0"
+        version = metadata.version.removeprefix("v") if metadata.version else "0.0.0"
 
         wheel_directory = Path(wheel_directory)
         wheel_directory.mkdir(exist_ok=True)

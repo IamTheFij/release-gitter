@@ -19,7 +19,7 @@ authors = [
 maintainers = [
     { name = "Ian Fijolek", email = "iamthefij@gmail.com" }
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = ["requests"]
 
 [project.optional-dependencies]
@@ -53,7 +53,7 @@ run = [
 ]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["3", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+python = ["3", "3.9", "3.10", "3.11", "3.12", "3.13"]
 
 [tool.hatch.envs.lint]
 detached = true
