@@ -48,7 +48,7 @@ dependencies = [
 [tool.hatch.envs.test.scripts]
 run = [
     "coverage erase",
-    "coverage run --source=release_gitter -m unittest discover -p '*_test.py'",
+    "coverage run --source=release_gitter,pseudo_builder -m unittest discover -p '*_test.py'",
     "coverage report -m # --fail-under 70",
 ]
 
