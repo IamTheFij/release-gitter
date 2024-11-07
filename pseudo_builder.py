@@ -18,11 +18,10 @@ from wheel.wheelfile import WheelFile
 import release_gitter as rg
 from release_gitter import removeprefix
 
-PACKAGE_NAME = "pseudo"
-
 
 @dataclass
 class Config:
+    name: str
     format: str
     git_url: str
     hostname: str
@@ -64,34 +63,36 @@ def download(config: Config, wheel_scripts: Path) -> list[Path]:
 
 
 def read_metadata() -> Config:
-    config = toml.load("pyproject.toml").get("tool", {}).get("release-gitter")
-    if not config:
+    """Read configuration from pyproject.toml"""
+    pyproject = toml.load("pyproject.toml").get("tool", {}).get("release-gitter")
+    if not pyproject:
         raise ValueError("Must have configuration in [tool.release-gitter]")
 
-    git_url = config.pop("git-url", None)
+    git_url = pyproject.pop("git-url", None)
     remote_info = rg.parse_git_remote(git_url)
 
-    args = Config(
-        format=config.pop("format"),
+    config = Config(
+        name=pyproject.pop("name", remote_info.repo),
+        format=pyproject.pop("format"),
         git_url=git_url,
-        hostname=config.pop("hostname", remote_info.hostname),
-        owner=config.pop("owner", remote_info.owner),
-        repo=config.pop("repo", remote_info.repo),
+        hostname=pyproject.pop("hostname", remote_info.hostname),
+        owner=pyproject.pop("owner", remote_info.owner),
+        repo=pyproject.pop("repo", remote_info.repo),
     )
 
-    for key, value in config.items():
-        setattr(args, str(key).replace("-", "_"), value)
+    for key, value in pyproject.items():
+        setattr(config, str(key).replace("-", "_"), value)
 
-    if args.version is None:
-        args.version = rg.read_version(
-            args.version_git_tag,
-            not args.version_git_no_fetch,
+    if config.version is None:
+        config.version = rg.read_version(
+            config.version_git_tag,
+            not config.version_git_no_fetch,
         )
 
-    if args.extract_all:
-        args.extract_files = []
+    if config.extract_all:
+        config.extract_files = []
 
-    return args
+    return config
 
 
 class _PseudoBuildBackend:
@@ -108,7 +109,7 @@ class _PseudoBuildBackend:
         version = removeprefix(metadata.version, "v") if metadata.version else "0.0.0"
 
         # Returns distinfo dir?
-        dist_info = Path(metadata_directory) / f"{PACKAGE_NAME}-{version}.dist-info"
+        dist_info = Path(metadata_directory) / f"{metadata.name}-{version}.dist-info"
         dist_info.mkdir()
 
         # Write metadata
@@ -117,7 +118,7 @@ class _PseudoBuildBackend:
             "\n".join(
                 [
                     "Metadata-Version: 2.1",
-                    f"Name: {PACKAGE_NAME}",
+                    f"Name: {metadata.name}",
                     f"Version: {version}",
                 ]
             )
@@ -149,6 +150,8 @@ class _PseudoBuildBackend:
     def build_wheel(
         self, wheel_directory, config_settings=None, metadata_directory=None
     ):
+        if metadata_directory is None:
+            raise ValueError("Cannot build wheel without metadata_directory")
         metadata_directory = Path(metadata_directory)
 
         metadata = read_metadata()
@@ -157,7 +160,7 @@ class _PseudoBuildBackend:
         wheel_directory = Path(wheel_directory)
         wheel_directory.mkdir(exist_ok=True)
 
-        wheel_scripts = wheel_directory / f"{PACKAGE_NAME}-{version}.data/scripts"
+        wheel_scripts = wheel_directory / f"{metadata.name}-{version}.data/scripts"
         wheel_scripts.mkdir(parents=True, exist_ok=True)
 
         copytree(metadata_directory, wheel_directory / metadata_directory.name)
@@ -176,11 +179,11 @@ class _PseudoBuildBackend:
 
         print(f"ls {wheel_directory}: {list(wheel_directory.rglob('*'))}")
 
-        wheel_filename = f"{PACKAGE_NAME}-{version}-py2.py3-none-any.whl"
+        wheel_filename = f"{metadata.name}-{version}-py2.py3-none-any.whl"
         with WheelFile(wheel_directory / wheel_filename, "w") as wf:
             print("Repacking wheel as {}...".format(wheel_filename), end="")
             # sys.stdout.flush()
-            wf.write_files(wheel_directory)
+            wf.write_files(str(wheel_directory))
 
         return wheel_filename
 
