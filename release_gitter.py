@@ -661,9 +661,14 @@ def main():
         print(asset["browser_download_url"])
         return
 
+    format_fields = dict(
+        asset_name=asset["name"],
+        **matched_values._asdict(),
+    )
+
     # Format files to extract with version info, as this is sometimes included
     formatted_files = (
-        [file.format(**matched_values._asdict()) for file in args.extract_files]
+        [file.format(**format_fields) for file in args.extract_files]
         if args.extract_files
         else None
     )
@@ -678,7 +683,7 @@ def main():
 
     # Optionally execute post command
     if args.exec:
-        check_call(args.exec.format(asset["name"]), shell=True)
+        check_call(args.exec.format(asset["name"], **format_fields), shell=True)
 
 
 if __name__ == "__main__":
