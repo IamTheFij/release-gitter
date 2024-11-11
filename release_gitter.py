@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import platform
+import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass
 from io import BytesIO
@@ -552,6 +553,12 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Only print the URL and do not download",
     )
+    parser.add_argument(
+        "--use-temp-dir",
+        "-t",
+        action="store_true",
+        help="Use a temporary directory as the destination",
+    )
 
     parsed_args = parser.parse_args(args)
 
@@ -575,6 +582,9 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
 
     if parsed_args.extract_all:
         parsed_args.extract_files = []
+
+    if parsed_args.use_temp_dir:
+        parsed_args.destination = Path(tempfile.mkdtemp())
 
     return parsed_args
 
@@ -683,7 +693,11 @@ def main():
 
     # Optionally execute post command
     if args.exec:
-        check_call(args.exec.format(asset["name"], **format_fields), shell=True)
+        check_call(
+            args.exec.format(asset["name"], **format_fields),
+            shell=True,
+            cwd=args.destination,
+        )
 
 
 if __name__ == "__main__":
