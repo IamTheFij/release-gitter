@@ -555,7 +555,6 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--use-temp-dir",
-        "-t",
         action="store_true",
         help="Use a temporary directory as the destination",
     )
