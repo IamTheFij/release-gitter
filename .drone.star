@@ -72,6 +72,9 @@ def test_step(docker_tag, python_cmd="python"):
             "{} -V".format(python_cmd),
             "make clean-all test"
         ],
+        "environment": {
+            "PIP_CACHE_DIR": ".pip-cache",
+        },
     }
 
 
