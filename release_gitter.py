@@ -21,7 +21,7 @@ from zipfile import ZipFile
 
 import requests
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 
 
 class UnsupportedContentTypeError(ValueError):
