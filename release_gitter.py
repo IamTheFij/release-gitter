@@ -389,7 +389,7 @@ class PackageAdapter:
             self._package.extractall(path=path, members=members)
         if isinstance(self._package, TarFile):
             self._package.extractall(
-                path=path, members=(TarInfo(name) for name in members)
+                path=path, members=(self._package.getmember(name) for name in members)
             )
 
         return members
