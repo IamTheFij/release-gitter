@@ -380,7 +380,9 @@ class PackageAdapter:
 
             return self.get_names()
 
-        if missing_members := set(members) - set(self.get_names()):
+        # TODO: Use walrus operator when dropping 3.7 support
+        missing_members = set(members) - set(self.get_names())
+        if missing_members:
             raise ValueError(f"Missing members: {missing_members}")
 
         logging.debug("Extracting members %s to %s", members, path)
