@@ -653,7 +653,7 @@ def download_release(
 
     formatted_files = (
         [file.format(**format_fields) for file in extract_files]
-        if extract_files
+        if extract_files is not None
         else None
     )
 
