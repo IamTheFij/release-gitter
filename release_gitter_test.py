@@ -82,7 +82,7 @@ class TestRemoteInfo(unittest.TestCase):
                 release_gitter.InvalidRemoteError,
             ),
         ):
-            test_case.run(release_gitter.parse_git_remote)
+            test_case.run(release_gitter.parse_git_url)
 
     def test_generate_release_url(self):
         for subtest in (

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import platform
 import tempfile
 from collections.abc import Sequence
@@ -22,6 +23,9 @@ from zipfile import ZipFile
 import requests
 
 __version__ = "3.0.1"
+
+
+logging.basicConfig(level=logging.WARNING)
 
 
 class UnsupportedContentTypeError(ValueError):
@@ -122,13 +126,13 @@ class GitRemoteInfo:
         )
 
 
-def parse_git_remote(git_url: str | None = None) -> GitRemoteInfo:
-    """Extract Github repo info from a git remote url"""
-    if not git_url:
-        git_url = (
-            check_output(["git", "remote", "get-url", "origin"]).decode("UTF-8").strip()
-        )
+def read_git_remote() -> str:
+    """Reads the git remote url from the origin"""
+    return check_output(["git", "remote", "get-url", "origin"]).decode("UTF-8").strip()
 
+
+def parse_git_url(git_url: str) -> GitRemoteInfo:
+    """Extract Github repo info from a git remote url"""
     # Normalize Github ssh url as a proper URL
     if git_url.startswith("git@github.com:"):
         git_ssh_parts = git_url.partition(":")
@@ -175,6 +179,7 @@ def read_git_tag(fetch: bool = True) -> str | None:
 def read_version(from_tags: bool = False, fetch: bool = False) -> str | None:
     """Read version information from file or from git"""
     if from_tags:
+        logging.debug("Reading version from git tag")
         return read_git_tag(fetch)
 
     matchers = {
@@ -184,10 +189,13 @@ def read_version(from_tags: bool = False, fetch: bool = False) -> str | None:
     for name, extractor in matchers.items():
         p = Path(name)
         if p.exists():
+            logging.debug(f"Reading version from {p}")
             return extractor(p)
 
-    # TODO: Log this out to stderr
-    # raise ValueError(f"Unknown project type. Didn't find any of {matchers.keys()}")
+    logging.warning(
+        "Unknown local project version. Didn't find any of %s", set(matchers.keys())
+    )
+
     return None
 
 
@@ -210,6 +218,8 @@ def fetch_release(
 
     # Return the latest if requested
     if version is None or version == "latest":
+        logging.debug("Looking for latest release")
+
         for release in result.json():
             if release["prerelease"] and not pre_release:
                 continue
@@ -219,6 +229,8 @@ def fetch_release(
     # Return matching version
     for release in result.json():
         if release["tag_name"].endswith(version):
+            logging.debug(f"Found release {release['name']} matching version {version}")
+
             return release
 
     raise ValueError(
@@ -269,13 +281,7 @@ def match_asset(
 
     # This should never really happen
     if version is None:
-        if "{version}" in format:
-            raise ValueError(
-                "No version provided or found in release name but is in format"
-            )
-        else:
-            # This should never happen, but since version isn't used anywhere, we can make it an empty string
-            version = ""
+        raise ValueError("No version provided or found in release name.")
 
     system = platform.system()
     if system_mapping:
@@ -323,8 +329,12 @@ class PackageAdapter:
             "application/zip",
             "application/x-zip-compressed",
         ):
+            logging.debug("Opening zip file from response content")
+
             self._package = ZipFile(BytesIO(response.content))
         elif content_type == "application/x-tar":
+            logging.debug("Opening tar file from response content")
+
             self._package = TarFile(fileobj=response.raw)
         elif content_type in (
             "application/gzip",
@@ -332,6 +342,8 @@ class PackageAdapter:
             "application/x-tar+xz",
             "application/x-compressed-tar",
         ):
+            logging.debug("Opening compressed tar file from response content")
+
             self._package = TarFile.open(fileobj=BytesIO(response.content), mode="r:*")
         else:
             raise UnsupportedContentTypeError(
@@ -342,6 +354,7 @@ class PackageAdapter:
         """Get list of all file names in package"""
         if isinstance(self._package, ZipFile):
             return self._package.namelist()
+
         if isinstance(self._package, TarFile):
             return self._package.getnames()
 
@@ -359,13 +372,18 @@ class PackageAdapter:
         If the `file_names` list is empty, all files will be extracted"""
         if path is None:
             path = Path.cwd()
+
         if not members:
+            logging.debug("Extracting all members to %s", path)
+
             self._package.extractall(path=path)
+
             return self.get_names()
 
-        missing_members = set(members) - set(self.get_names())
-        if missing_members:
+        if missing_members := set(members) - set(self.get_names()):
             raise ValueError(f"Missing members: {missing_members}")
+
+        logging.debug("Extracting members %s to %s", members, path)
 
         if isinstance(self._package, ZipFile):
             self._package.extractall(path=path, members=members)
@@ -394,7 +412,7 @@ def get_asset_package(
             continue
     else:
         raise UnsupportedContentTypeError(
-            "Cannot extract files from archive because we don't recognize the content type"
+            f"Cannot extract files from archive because we don't recognize the content types {possible_content_types}"
         )
 
 
@@ -421,8 +439,10 @@ def download_asset(
     result = requests.get(asset["browser_download_url"])
 
     if extract_files is not None:
+        logging.info("Extracting package %s", asset["name"])
         package = get_asset_package(asset, result)
         extract_files = package.extractall(path=destination, members=extract_files)
+
         return [destination / name for name in extract_files]
 
     file_name = destination / asset["name"]
@@ -469,6 +489,7 @@ class MapAddAction(argparse.Action):
 
 
 def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
+    logging.debug("Parsing arguments: %s", args)
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "format",
@@ -482,7 +503,9 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
         default=Path.cwd(),
         help="Destination directory. Defaults to current directory",
     )
-    parser.add_argument("-v", action="store_true", help="verbose logging")
+    parser.add_argument(
+        "-v", action="count", help="verbose or debug logging", default=0
+    )
     parser.add_argument(
         "--hostname",
         help="Git repository hostname",
@@ -563,7 +586,19 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
 
     # Merge in fields from args and git remote
     if not all((parsed_args.owner, parsed_args.repo, parsed_args.hostname)):
-        remote_info = parse_git_remote(parsed_args.git_url)
+        # Check to see if a git url was provided. If not, we use local directory git remote
+        if parsed_args.git_url is None:
+            parsed_args.git_url = read_git_remote()
+
+            # If using a local repo, try to determine version from project files
+            if parsed_args.version is None:
+                parsed_args.version = read_version(
+                    parsed_args.version_git_tag,
+                    not parsed_args.version_git_no_fetch,
+                )
+
+        # Get parts from git url
+        remote_info = parse_git_url(parsed_args.git_url)
 
         def merge_field(a, b, field):
             value = getattr(a, field)
@@ -572,12 +607,6 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
 
         for field in ("owner", "repo", "hostname"):
             merge_field(parsed_args, remote_info, field)
-
-    if parsed_args.version is None:
-        parsed_args.version = read_version(
-            parsed_args.version_git_tag,
-            not parsed_args.version_git_no_fetch,
-        )
 
     if parsed_args.extract_all:
         parsed_args.extract_files = []
@@ -645,6 +674,8 @@ def download_release(
 def main():
     args = _parse_args()
 
+    logging.getLogger().setLevel(30 - 10 * args.v)
+
     # Fetch the release
     release = fetch_release(
         GitRemoteInfo(args.hostname, args.owner, args.repo),
@@ -652,7 +683,11 @@ def main():
         pre_release=args.prerelease,
     )
 
+    logging.debug("Found release: %s", release["name"])
+
     version = args.version or release["tag_name"]
+
+    logging.debug("Release version: %s", version)
 
     # Find the asset to download using mapping rules
     asset, matched_values = match_asset(
@@ -663,8 +698,7 @@ def main():
         arch_mapping=args.map_arch,
     )
 
-    if args.v:
-        print(f"Downloading {asset['name']} from release {release['name']}")
+    logging.info(f"Downloading {asset['name']} from release {release['name']}")
 
     if args.url_only:
         print(asset["browser_download_url"])
@@ -678,7 +712,7 @@ def main():
     # Format files to extract with version info, as this is sometimes included
     formatted_files = (
         [file.format(**format_fields) for file in args.extract_files]
-        if args.extract_files
+        if args.extract_files is not None
         else None
     )
 
