@@ -337,6 +337,7 @@ class PackageAdapter:
 
             self._package = TarFile(fileobj=response.raw)
         elif content_type in (
+            "gzip",
             "application/gzip",
             "application/x-tar+gzip",
             "application/x-tar+xz",
