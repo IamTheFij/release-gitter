@@ -22,7 +22,7 @@ from zipfile import ZipFile
 
 import requests
 
-__version__ = "3.0.4"
+__version__ = "3.1.0"
 
 
 logging.basicConfig(level=logging.WARNING)
