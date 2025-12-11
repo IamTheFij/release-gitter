@@ -165,6 +165,16 @@ def parse_cargo_version(p: Path) -> str:
     raise ValueError(f"No version found in {p}")
 
 
+def parse_cabal_version(p: Path) -> str:
+    """Extracts cabal version from a *.cabal file"""
+    with p.open() as f:
+        for line in f:
+            if line.startswith("version"):
+                return line.partition(":")[2].strip()
+
+    raise ValueError(f"No version found in {p}")
+
+
 def read_git_tag(fetch: bool = True) -> str | None:
     """Get local git tag for current repo
 
@@ -184,6 +194,7 @@ def read_version(from_tags: bool = False, fetch: bool = False) -> str | None:
 
     matchers = {
         "Cargo.toml": parse_cargo_version,
+        "*.cabal": parse_cabal_version,
     }
 
     for name, extractor in matchers.items():
@@ -191,6 +202,16 @@ def read_version(from_tags: bool = False, fetch: bool = False) -> str | None:
         if p.exists():
             logging.debug(f"Reading version from {p}")
             return extractor(p)
+        else:
+            # If the file doen't exist, try globbing
+            for path in Path(".").glob(name):
+                logging.debug(f"Reading version from {path}")
+                try:
+                    return extractor(path)
+                # If it's a glob, there may be multiple files, so we ignore failures
+                except ValueError:
+                    logging.debug("Could not read version from %s", path)
+                    continue
 
     logging.warning(
         "Unknown local project version. Didn't find any of %s", set(matchers.keys())
