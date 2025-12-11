@@ -59,6 +59,9 @@ def read_metadata() -> Config:
         raise ValueError("Must have configuration in [tool.release-gitter]")
 
     git_url = pyproject.pop("git-url", None)
+    if not git_url:
+        git_url = rg.read_git_remote()
+
     remote_info = rg.parse_git_url(git_url)
 
     config = Config(
