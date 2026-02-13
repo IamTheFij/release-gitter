@@ -43,4 +43,4 @@ jobs:
         run: make devenv
 
       - name: Run pre-commit
-        uses: https://git.iamthefij.com/iamthefij/pre-commit-action@v3.0.2
+        uses: https://git.iamthefij.com/iamthefij/pre-commit-action@v3.1.0
