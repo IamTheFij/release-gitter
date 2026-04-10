@@ -62,7 +62,7 @@ SYSTEM_SYNONYMS: list[list[str]] = [
 
 ARCH_SYNONYMS: list[list[str]] = [
     ["arm"],
-    ["x86_64", "amd64", "AMD64"],
+    ["x86_64", "amd64", "AMD64", "x64"],
     ["arm64", "aarch64", "armv8b", "armv8l"],
     ["x86", "i386", "i686"],
 ]
