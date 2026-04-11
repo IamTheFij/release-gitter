@@ -36,20 +36,24 @@ Additionally, it can be used to simplify install instructions for users by provi
 
 Full usage is as follows:
 
-    usage: release-gitter [-h] [--hostname HOSTNAME] [--owner OWNER] [--repo REPO]
-                          [--git-url GIT_URL] [--version VERSION]
-                          [--version-git-tag] [--version-git-no-fetch]
-                          [--map-system MAP_SYSTEM] [--map-arch MAP_ARCH]
-                          [--exec EXEC] [--extract-files EXTRACT_FILES]
-                          [--extract-all] [--url-only]
-                          format
+<!-- USAGE_BEGIN -->
+    usage: release-gitter [-h] [-v] [--hostname HOSTNAME] [--owner OWNER]
+                          [--repo REPO] [--git-url GIT_URL] [--version VERSION]
+                          [--prerelease] [--version-git-tag]
+                          [--version-git-no-fetch] [--map-system MAP_SYSTEM]
+                          [--map-arch MAP_ARCH] [--exec EXEC]
+                          [--extract-files EXTRACT_FILES] [--extract-all]
+                          [--url-only] [--use-temp-dir]
+                          format [DEST]
 
     positional arguments:
-      format                Format template to match assets. Eg
+      format                Format template to match assets. Eg.
                             `foo-{version}-{system}-{arch}.zip`
+      DEST                  Destination directory. Defaults to current directory
 
-    optional arguments:
+    options:
       -h, --help            show this help message and exit
+      -v                    verbose or debug logging
       --hostname HOSTNAME   Git repository hostname
       --owner OWNER         Owner of the repo. If not provided, it will be
                             retrieved from the git url
@@ -58,21 +62,27 @@ Full usage is as follows:
       --git-url GIT_URL     Git repository URL. Overrides `git remote` detection,
                             but not command line options for hostname, owner, and
                             repo
-      --version VERSION     Release version to download. If not provied, it will
+      --version VERSION     Release version to download. If not provided, it will
                             look for project metadata
+      --prerelease          Include pre-release versions in search
       --version-git-tag, -t
                             Get the release version from a git tag
       --version-git-no-fetch
                             Shallow fetch tags prior to checking versions
-      --map-system MAP_SYSTEM, -s MAP_SYSTEM
+      --map-system, -s MAP_SYSTEM
                             Map a platform.system() value to a custom value
-      --map-arch MAP_ARCH, -a MAP_ARCH
+      --map-arch, -a MAP_ARCH
                             Map a platform.machine() value to a custom value
-      --exec EXEC, -c EXEC  Shell commands to execute after download or extraction
-      --extract-files EXTRACT_FILES, -e EXTRACT_FILES
-                            A list of file name to extract from downloaded archive
-      --extract-all, -x     Shell commands to execute after download or extraction
+      --exec, -c EXEC       Shell commands to execute after download or
+                            extraction. {} will be expanded to the downloaded
+                            asset name.
+      --extract-files, -e EXTRACT_FILES
+                            A list of file names to extract from the downloaded
+                            archive
+      --extract-all, -x     Extract all files from the downloaded archive
       --url-only            Only print the URL and do not download
+      --use-temp-dir        Use a temporary directory as the destination
+<!-- USAGE_END -->
 
 ### Pre-Commit usage
 
