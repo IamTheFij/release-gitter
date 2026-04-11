@@ -19,11 +19,11 @@ jobs:
         # We can't have a dependency on the other workflow, so we re-run the tests here
         run: make test
 
-      - name: Run test upload
-        env:
-          POETRY_PYPI_TOKEN: "${{ secrets.PYPI_TEST_TOKEN }}"
-          POETRY_REPOSITORIES_TESTPYPI_URL: "https://test.pypi.org/legacy/"
-        run: make upload-test
+      # - name: Run test upload
+      #   env:
+      #     POETRY_PYPI_TOKEN: "${{ secrets.PYPI_TEST_TOKEN }}"
+      #     POETRY_REPOSITORIES_TESTPYPI_URL: "https://test.pypi.org/legacy/"
+      #   run: make upload-test
 
       - name: Run prod upload
         env:

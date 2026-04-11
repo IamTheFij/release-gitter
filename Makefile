@@ -51,7 +51,7 @@ upload: verify-tag-version build
 .PHONY: upload-test
 upload-test: build
 	# Bump version to a post version based on num of commits since last tag to prevent overwriting
-	# $(ENV)/bin/hatch version $(shell git describe --tags | sed 's/-[0-9a-z]*$$//')
+	$(ENV)/bin/hatch version $(shell git describe --tags | sed 's/-[0-9a-z]*$$//')
 	$(ENV)/bin/hatch publish --repo test
 
 # Cleans all build, runtime, and test artifacts
