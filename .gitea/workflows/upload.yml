@@ -19,13 +19,9 @@ jobs:
         # We can't have a dependency on the other workflow, so we re-run the tests here
         run: make test
 
-      # - name: Run test upload
-      #   env:
-      #     POETRY_PYPI_TOKEN: "${{ secrets.PYPI_TEST_TOKEN }}"
-      #     POETRY_REPOSITORIES_TESTPYPI_URL: "https://test.pypi.org/legacy/"
-      #   run: make upload-test
-
       - name: Run prod upload
         env:
-          POETRY_PYPI_TOKEN: "${{ secrets.PYPI_TOKEN }}"
+          HATCH_INDEX_REPO: main
+          HATCH_INDEX_USER: "__token__"
+          HATCH_INDEX_AUTH: "${{ secrets.PYPI_TOKEN }}"
         run: make upload
