@@ -26,3 +26,9 @@ repos:
         additional_dependencies:
           - "types-requests"
           - "types-toml"
+  - repo: local
+    hooks:
+      - id: update-readme
+        name: Update readme with usage
+        language: system
+        entry: python ./scripts/update_readme.py
