@@ -478,5 +478,32 @@ class TestMatchAsset(unittest.TestCase):
             test_case.run(first_result(run_with_context))
 
 
+class TestFetchReleaseGithubToken(unittest.TestCase):
+    def test_without_token_no_auth_header(self):
+        remote = release_gitter.GitRemoteInfo("github.com", "owner", "repo")
+        mock_response = MagicMock(spec=requests.Response)
+        mock_response.json.return_value = [
+            {"tag_name": "v1.0.0", "name": "Release", "prerelease": False, "assets": []}
+        ]
+        with patch("requests.get", return_value=mock_response) as mock_get:
+            with patch.dict("os.environ", {}, clear=True):
+                release_gitter.fetch_release(remote)
+                headers = mock_get.call_args[1]["headers"]
+                self.assertNotIn("Authorization", headers)
+
+    def test_with_token_includes_auth_header(self):
+        remote = release_gitter.GitRemoteInfo("github.com", "owner", "repo")
+        mock_response = MagicMock(spec=requests.Response)
+        mock_response.json.return_value = [
+            {"tag_name": "v1.0.0", "name": "Release", "prerelease": False, "assets": []}
+        ]
+        with patch("requests.get", return_value=mock_response) as mock_get:
+            with patch.dict("os.environ", {"GITHUB_TOKEN": "test_token_123"}):
+                release_gitter.fetch_release(remote)
+                headers = mock_get.call_args[1]["headers"]
+                self.assertIn("Authorization", headers)
+                self.assertEqual(headers["Authorization"], "Bearer test_token_123")
+
+
 if __name__ == "__main__":
     unittest.main()

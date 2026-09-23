@@ -6,6 +6,16 @@ Easily download releases from sites like Github and Gitea
 
 Originally hosted at https://git.iamthefij.com/iamthefij/release-gitter.git
 
+## GitHub Rate Limits
+
+Unauthenticated requests to the GitHub API are limited to 60 requests per hour. If you exceed this limit, you will receive rate limit errors when trying to fetch releases.
+
+To increase your rate limit to 5,000 requests per hour, set a `GITHUB_TOKEN` environment variable with a GitHub personal access token:
+
+    export GITHUB_TOKEN=ghp_your_token_here
+
+You can create a personal access token at https://github.com/settings/tokens (no special scopes required for public repository access).
+
 ## Installation
 
 From pypi `pip install release-gitter`

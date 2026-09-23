@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import platform
 import tempfile
 from collections.abc import Sequence
@@ -230,10 +231,14 @@ def fetch_release(
     If a version number is provided, that version will be retrieved. Otherwise, the latest
     will be returned.
     """
+    headers = {"Accept": "application/json"}
+    github_token = os.environ.get("GITHUB_TOKEN")
+    if github_token:
+        headers["Authorization"] = f"Bearer {github_token}"
+
     result = requests.get(
         remote.get_releases_url(),
-        # headers={"Accept": "application/vnd.github.v3+json"},
-        headers={"Accept": "application/json"},
+        headers=headers,
     )
     result.raise_for_status()
 
