@@ -17,7 +17,7 @@ def update_usage(readme_path: Path, usage: str):
         raise ValueError("Readme file does not exist.")
 
     new_content: list[str] = []
-    usage_content = [f"    {line}\n" for line in usage.split("\n")]
+    usage_content = [f"    {line}\n" if line else "\n" for line in usage.split("\n")]
 
     with open(readme_path, "r") as file:
         content_lines = file.readlines()
@@ -43,10 +43,7 @@ def update_usage(readme_path: Path, usage: str):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        readme_path = Path(sys.argv[1])
-    else:
-        readme_path = Path(__file__).parent.parent / "README.md"
+    readme_path = Path(__file__).parent.parent / "README.md"
 
     if not readme_path.exists():
         raise ValueError("Readme file does not exist.")
